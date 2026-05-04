@@ -1,7 +1,7 @@
 {
-  "name": "AVANT Lab — 信号観測デモ",
-  "short_name": "AVANT Lab",
-  "description": "WebGL2 背景、ラボ計測、コマンドパレット、オフライン対応の静的デモ。",
+  "name": "株式会社 AVANT",
+  "short_name": "AVANT",
+  "description": "ブランド体験とデジタルプロダクトの設計・制作。クリエイティブスタジオ公式サイト。",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#030306",

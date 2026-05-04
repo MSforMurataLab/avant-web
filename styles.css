@@ -1055,6 +1055,15 @@ kbd {
   color: var(--fg-muted);
 }
 
+.contact-note {
+  margin: -1rem 0 2rem;
+  max-width: 36rem;
+  font-size: 0.72rem;
+  line-height: 1.6;
+  letter-spacing: 0.04em;
+  color: rgba(232, 230, 239, 0.48);
+}
+
 .cta {
   display: inline-flex;
   align-items: center;

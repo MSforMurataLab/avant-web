@@ -126,11 +126,11 @@
   function netLabel() {
     if (typeof navigator.onLine === "boolean" && !navigator.onLine) return "オフライン";
     const c = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
-    if (!c) return "不明";
+    if (!c) return "情報なし";
     const parts = [];
     if (c.effectiveType) parts.push(c.effectiveType);
     if (c.downlink != null) parts.push(String(c.downlink) + "Mbps");
-    return parts.join(" · ") || "不明";
+    return parts.join(" · ") || "情報なし";
   }
 
   function refreshDeck() {
@@ -143,11 +143,14 @@
     if (metricGlMs && lastGlFrameMs == null) metricGlMs.textContent = "—";
     if (metricGlScale && lastGlScale == null) metricGlScale.textContent = "—";
     if (metricNet) metricNet.textContent = netLabel();
-    if (metricVis) metricVis.textContent = document.hidden ? "非表示" : "表示";
-    if (metricMotion) metricMotion.textContent = prefersReducedMotion.matches ? "注意" : "通常";
+    if (metricVis) metricVis.textContent = document.hidden ? "背面のタブ" : "表示中";
+    if (metricMotion) metricMotion.textContent = prefersReducedMotion.matches ? "動きを抑える" : "標準";
     if (metricSw) {
       if (!("serviceWorker" in navigator)) metricSw.textContent = "未対応";
-      else if (navigator.serviceWorker.controller) metricSw.textContent = "制御下";
+      else if (navigator.serviceWorker.controller) metricSw.textContent = "利用できます";
+      else if (swStateLabel === "登録済") metricSw.textContent = "準備済み";
+      else if (swStateLabel === "登録失敗") metricSw.textContent = "利用できません";
+      else if (swStateLabel === "更新検知") metricSw.textContent = "更新があります";
       else metricSw.textContent = swStateLabel;
     }
   }
@@ -179,7 +182,7 @@
         refreshDeck();
       });
     navigator.serviceWorker.addEventListener("controllerchange", () => {
-      swStateLabel = "制御下";
+      swStateLabel = "利用できます";
       refreshDeck();
     });
   }
@@ -236,25 +239,31 @@
   /* --- Log dialog --- */
   const LOGS = {
     a: {
-      title: "LOG / AMBIENT",
+      title: "サービス概要（抜粋）",
       body:
-        "[ambient] field_gain=0.94\n" +
-        "[ambient] grain_mix=0.03\n" +
-        "[note] reduce-motion では粒子レイヤーを抑制し、CSS フォールバックへ遷移します。",
+        "株式会社 AVANT は、ブランド体験とデジタルプロダクトを横断して設計するクリエイティブスタジオです。\n\n" +
+        "・ブランド／コミュニケーション設計\n" +
+        "・Web・業務アプリケーション UI\n" +
+        "・デザインシステム構築と運用支援\n\n" +
+        "プロジェクト規模に応じて、ディレクションから実装ディテールまでチームを編成します。まずは要件整理のワークショップからご一緒することも可能です。",
     },
     b: {
-      title: "LOG / ROUTING",
+      title: "プロジェクト進行の流れ（例）",
       body:
-        "[route] cmdk.open -> filterCommands()\n" +
-        "[route] hash -> scrollIntoView(smooth)\n" +
-        "[route] log tile -> dialog.showModal() + pre.textContent",
+        "1. ヒアリング・目的／指標の整理（1〜2 週間）\n" +
+        "2. 情報設計・ワイヤーフレーム・テスト計画（2〜4 週間）\n" +
+        "3. ビジュアルデザイン・プロトタイプ（3〜6 週間）\n" +
+        "4. 実装支援・受け入れテスト・公開準備（スコープに応じて）\n" +
+        "5. 公開後の計測レビュー・改善スプリント（任意契約）\n\n" +
+        "スケジュールは要件により前後します。御社の承認プロセスに合わせたマイルストーン設計も対応いたします。",
     },
     c: {
-      title: "LOG / FAILSAFE",
+      title: "情報セキュリティへの取り組み（概要）",
       body:
-        "[failsafe] webglcontextlost -> cancelAnimationFrame\n" +
-        "[failsafe] perfSmooth>24.5ms -> renderScale -= 0.038\n" +
-        "[failsafe] fetch miss -> index.html from cache (SW)",
+        "・プロジェクト資料はアクセス権限を限定したクラウドまたは VPN 内共有を基本とします。\n" +
+        "・個人情報・機密情報を取り扱う場合は、別途 NDA と取り扱い規程にて合意します。\n" +
+        "・制作物のソースコードおよびデザインデータは、契約終了後も指定保管期間を経て安全に廃棄します。\n\n" +
+        "詳細はご発注時にお渡しするセキュリティ・コンプライアンス資料をご確認ください。",
     },
   };
 
@@ -287,14 +296,14 @@
       if (!logClipboard) return;
       try {
         await navigator.clipboard.writeText(logClipboard);
-        logCopy.textContent = "複製済";
+        logCopy.textContent = "コピーしました";
         window.setTimeout(() => {
-          logCopy.textContent = "クリップボードへ複製";
+          logCopy.textContent = "テキストをコピー";
         }, 1600);
       } catch (_) {
-        logCopy.textContent = "失敗";
+        logCopy.textContent = "コピーできませんでした";
         window.setTimeout(() => {
-          logCopy.textContent = "クリップボードへ複製";
+          logCopy.textContent = "テキストをコピー";
         }, 2000);
       }
     });
@@ -306,34 +315,34 @@
   const cmdkList = document.getElementById("cmdk-list");
 
   const COMMANDS = [
-    { id: "top", label: "ヒーローへ", keys: "0 top hero", href: "#top" },
-    { id: "axis", label: "軸セクションへ", keys: "1 axis 軸", href: "#axis" },
-    { id: "protocol", label: "記録（タイムライン）へ", keys: "protocol 記録 trace", href: "#protocol" },
-    { id: "signal", label: "信号セクションへ", keys: "2 signal", href: "#signal" },
-    { id: "deck", label: "ラボ計測へ", keys: "3 deck lab", href: "#deck" },
-    { id: "contact", label: "接点（フッター）へ", keys: "4 contact footer", href: "#contact" },
+    { id: "top", label: "トップへ", keys: "top トップ ヒーロー", href: "#top" },
+    { id: "axis", label: "サービスへ", keys: "サービス axis service", href: "#axis" },
+    { id: "protocol", label: "会社概要へ", keys: "会社 protocol company 沿革", href: "#protocol" },
+    { id: "signal", label: "強みへ", keys: "強み signal", href: "#signal" },
+    { id: "deck", label: "表示環境へ", keys: "環境 deck 表示", href: "#deck" },
+    { id: "contact", label: "お問い合わせへ", keys: "連絡 contact 問い合わせ", href: "#contact" },
     {
       id: "log-a",
-      label: "観測ログ AMBIENT",
-      keys: "a ambient log",
+      label: "サービス概要テキストを開く",
+      keys: "資料 a 概要",
       action: () => openLog("a"),
     },
     {
       id: "log-b",
-      label: "観測ログ ROUTING",
-      keys: "b routing log",
+      label: "進行フローテキストを開く",
+      keys: "資料 b フロー",
       action: () => openLog("b"),
     },
     {
       id: "log-c",
-      label: "観測ログ FAILSAFE",
-      keys: "c failsafe log",
+      label: "セキュリティ方針テキストを開く",
+      keys: "資料 c セキュリティ",
       action: () => openLog("c"),
     },
     {
       id: "help",
-      label: "ショートカットヘルプ",
-      keys: "help ?",
+      label: "キーボード操作の一覧",
+      keys: "help ? ヘルプ",
       action: () => openHelp(),
     },
   ];

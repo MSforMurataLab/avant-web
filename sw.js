@@ -1,5 +1,5 @@
 /* Avant Web — offline shell: static assets only, versioned cache */
-const CACHE_VERSION = "avant-web-2026-05-04a";
+const CACHE_VERSION = "avant-web-2026-05-04-corporate";
 const CORE_ASSETS = [
   "./index.html",
   "./styles.css",

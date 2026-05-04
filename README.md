@@ -1,6 +1,6 @@
 # avant-web
 
-静的シングルページ（WebGL2 背景・ラボ計測・コマンドパレット・Service Worker）。
+株式会社 AVANT のコーポレートサイト様の静的シングルページ（WebGL 背景・環境表示・ページ内検索・オフライン対応）。
 
 ## 公開 URL（GitHub Pages）
 
