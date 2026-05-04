@@ -6,7 +6,7 @@
 
 リポジトリ設定で Pages のソースを **GitHub Actions** にしたうえで、ワークフロー成功後に次の URL で公開されます。
 
-`https://MSforMurataLab.github.io/avant-web/`
+`https://msformuratalab.github.io/avant-web/`
 
 （組織／ユーザー名とリポジトリ名が変わる場合は、リポジトリの **Settings → Pages** に表示される URL を参照してください。）
 
