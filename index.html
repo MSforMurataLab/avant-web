@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="dark" />
+    <meta
+      name="description"
+      content="観測ログとインタラクションを束ねたデモ環境。WebGL2 背景、コマンドパレット、オフライン対応の静的ラボ。"
+    />
+    <meta name="theme-color" content="#030306" />
+    <meta name="application-name" content="AVANT Lab" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="AVANT Lab — 信号観測デモ" />
+    <meta
+      property="og:description"
+      content="スクロールと入力がシェーダーへ流れ込む実験 UI。Ctrl+K でジャンプ、オフラインでも骨格を再現。"
+    />
+    <meta property="og:locale" content="ja_JP" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="AVANT Lab — 信号観測デモ" />
+    <meta
+      name="twitter:description"
+      content="WebGL2 フィールド、ラボ計測、コマンドパレット。静的配信で本番相当の体験を再現。"
+    />
+    <link rel="icon" href="icon.svg" type="image/svg+xml" />
+    <link rel="manifest" href="manifest.webmanifest" />
+    <title>AVANT Lab — 信号観測デモ</title>
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        "name": "AVANT Lab",
+        "inLanguage": "ja",
+        "description": "観測ログとインタラクションを束ねた静的デモ環境。"
+      }
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <a class="skip-link" href="#main">本文へスキップ</a>
+    <canvas id="field" aria-hidden="true"></canvas>
+    <div class="grain" aria-hidden="true"></div>
+
+    <header class="top">
+      <a class="mark" href="#top"><span class="pulse" aria-hidden="true"></span> AVANT</a>
+      <nav class="nav" aria-label="主要セクション">
+        <a href="#axis" data-nav-section="axis">軸</a>
+        <a href="#protocol" data-nav-section="protocol">記録</a>
+        <a href="#signal" data-nav-section="signal">信号</a>
+        <a href="#deck" data-nav-section="deck">計測</a>
+        <a href="#contact" data-nav-section="contact">接点</a>
+      </nav>
+    </header>
+
+    <div
+      class="scroll-progress"
+      id="scroll-progress"
+      role="progressbar"
+      aria-valuemin="0"
+      aria-valuemax="100"
+      aria-valuenow="0"
+      aria-label="ページ読了の目安"
+    ></div>
+
+    <main id="main">
+      <section class="hero" id="top" aria-labelledby="hero-title">
+        <p class="hero-kicker" data-reveal>静的配信 · 高忠実度 UI ラボ</p>
+        <h1 class="hero-title" id="hero-title">
+          <span class="line" data-reveal>観測と</span>
+          <span class="line line--invert" data-reveal>インタラクション</span>
+        </h1>
+        <p class="hero-lede" data-reveal>
+          スクロールと時刻がシェーダーへ流れ込み、端末の姿勢がログに刻まれる。演出ではなく「観測回路」として組んだデモ環境です。
+        </p>
+        <div class="hero-meta" data-reveal>
+          <span class="mono">緯度 <span id="lat">35.68</span></span>
+          <span class="mono">経度 <span id="lng">139.76</span></span>
+          <span class="mono">TZ UTC<span id="utc">+9</span></span>
+        </div>
+      </section>
+
+      <section class="marquee" aria-hidden="true">
+        <div class="marquee-track">
+          <span>SCROLL · SHADER · CMD+K · OFFLINE-FIRST · METRICS · </span>
+          <span>SCROLL · SHADER · CMD+K · OFFLINE-FIRST · METRICS · </span>
+        </div>
+      </section>
+
+      <section class="axis" id="axis" aria-labelledby="axis-title">
+        <header class="section-head">
+          <h2 id="axis-title" data-reveal>三つの観測軸</h2>
+          <p data-reveal>
+            レイアウトは編集可能なグリッド、挙動はキーボード優先、背景は GPU
+            上の仮想光学系。それぞれ独立して差し替えられるようモジュール化しています。
+          </p>
+        </header>
+        <div class="axis-grid">
+          <article class="card card--tall" data-reveal>
+            <h3>視覚の連続性</h3>
+            <p>
+              WebGL2 を第一候補にし、コンテキスト喪失からの復帰とレンダースケールの自動調整で、端末差を吸収します。低負荷モードでは粒子とポストエフェクトを抑制します。
+            </p>
+          </article>
+          <article class="card" data-reveal>
+            <h3>入力の短絡経路</h3>
+            <p>
+              コマンドパレットとヘルプをネイティブの dialog で実装。フォーカス移動と Esc
+              の挙動をブラウザ標準に寄せ、補助技術との相性を優先しました。
+            </p>
+          </article>
+          <article class="card card--accent" data-reveal>
+            <h3>静的オペレーション</h3>
+            <p>
+              Service Worker が同一オリジンの骨格をキャッシュ。回線が途切れてもラボの閲覧と計測表示の多くを維持できます。
+            </p>
+          </article>
+        </div>
+      </section>
+
+      <section class="protocol" id="protocol" aria-labelledby="protocol-title">
+        <div class="protocol__intro">
+          <p class="protocol__eyebrow mono" data-reveal>PROTOCOL TRACE</p>
+          <h2 id="protocol-title" class="protocol__title" data-reveal>リリース記録</h2>
+          <p class="protocol__lede" data-reveal>
+            ビジュアルとは別軸で、運用と再現性を語るためのタイムラインです。各項目は詳細を展開できます。
+          </p>
+        </div>
+        <ol class="protocol__timeline" data-reveal>
+          <li class="protocol__item">
+            <button type="button" class="protocol__head" aria-expanded="false" aria-controls="protocol-panel-1" id="protocol-trigger-1">
+              <span class="protocol__date mono">2026-Q1</span>
+              <span class="protocol__name">観測デッキの常時更新</span>
+              <span class="protocol__chev mono" aria-hidden="true">▼</span>
+            </button>
+            <div class="protocol__panel" id="protocol-panel-1" role="region" aria-labelledby="protocol-trigger-1" hidden>
+              <p>
+                Network Information API と Page Visibility、reduce-motion を束ね、ラボ計測を単一の更新ループに集約。GPU
+                フレーム時間は CustomEvent で UI へ橋渡ししています。
+              </p>
+            </div>
+          </li>
+          <li class="protocol__item">
+            <button type="button" class="protocol__head" aria-expanded="false" aria-controls="protocol-panel-2" id="protocol-trigger-2">
+              <span class="protocol__date mono">2026-Q1</span>
+              <span class="protocol__name">ポストパイプラインの分離</span>
+              <span class="protocol__chev mono" aria-hidden="true">▼</span>
+            </button>
+            <div class="protocol__panel" id="protocol-panel-2" role="region" aria-labelledby="protocol-trigger-2" hidden>
+              <p>
+                シーンを FBO に描画し、ACES 近似・ブルーム・色差を別パスで合成。inline 完了時のみスキャンラインをレイマーチ側へ逃がし、二重適用を避けています。
+              </p>
+            </div>
+          </li>
+          <li class="protocol__item">
+            <button type="button" class="protocol__head" aria-expanded="false" aria-controls="protocol-panel-3" id="protocol-trigger-3">
+              <span class="protocol__date mono">2026-Q2</span>
+              <span class="protocol__name">オフライン・シェル</span>
+              <span class="protocol__chev mono" aria-hidden="true">▼</span>
+            </button>
+            <div class="protocol__panel" id="protocol-panel-3" role="region" aria-labelledby="protocol-trigger-3" hidden>
+              <p>
+                バージョン付きキャッシュで index / styles / scripts / manifest を束ね、初回訪問後はオフラインでも同じ DOM
+                ツリーを再現。フォントはオンライン時のみ最適化ロードのままにしています。
+              </p>
+            </div>
+          </li>
+        </ol>
+      </section>
+
+      <section class="signal" id="signal" aria-labelledby="signal-title">
+        <div class="signal-visual" data-reveal>
+          <div class="orbit">
+            <span class="orbit-ring"></span>
+            <span class="orbit-dot"></span>
+          </div>
+        </div>
+        <div class="signal-copy">
+          <h2 id="signal-title" data-reveal>信号の位相</h2>
+          <p data-reveal>
+            スクロール量を正規化し、カメラとノイズ位相へ写像。ユーザー操作が「連続信号」として背景に戻る設計です。
+          </p>
+          <ul class="signal-list">
+            <li data-reveal><span class="mono">001</span> スクロール平滑化で急変を抑制</li>
+            <li data-reveal><span class="mono">002</span> DPR 上限でモバイル発熱を抑制</li>
+            <li data-reveal><span class="mono">003</span> 非表示タブでは rAF を停止</li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="gallery" aria-label="ログプリセット">
+        <button type="button" class="tile tile--1" data-reveal data-log="a" aria-label="観測ログ A を開く">
+          <span class="tile-label mono">LOG / AMBIENT</span>
+        </button>
+        <button type="button" class="tile tile--2" data-reveal data-log="b" aria-label="観測ログ B を開く">
+          <span class="tile-label mono">LOG / ROUTING</span>
+        </button>
+        <button type="button" class="tile tile--3" data-reveal data-log="c" aria-label="観測ログ C を開く">
+          <span class="tile-label mono">LOG / FAILSAFE</span>
+        </button>
+      </section>
+
+      <section class="lab-deck" id="deck" aria-labelledby="deck-title">
+        <div class="lab-deck__head">
+          <h2 id="deck-title" class="lab-deck__title" data-reveal>ラボ計測</h2>
+          <p class="lab-deck__lede" data-reveal>
+            実行時の端末とページ状態をそのまま可視化。値はイベント駆動で更新され、手動リロードは不要です。
+          </p>
+        </div>
+        <dl class="lab-deck__grid" data-reveal>
+          <div class="lab-metric">
+            <dt class="mono">読了距離</dt>
+            <dd><span id="metric-scroll">0</span><span class="unit">%</span></dd>
+          </div>
+          <div class="lab-metric">
+            <dt class="mono">ビューポート</dt>
+            <dd id="metric-viewport" class="mono">—</dd>
+          </div>
+          <div class="lab-metric">
+            <dt class="mono">DPR</dt>
+            <dd id="metric-dpr" class="mono">—</dd>
+          </div>
+          <div class="lab-metric">
+            <dt class="mono">GPU フレーム</dt>
+            <dd><span id="metric-gl-ms">—</span><span class="unit">ms</span></dd>
+          </div>
+          <div class="lab-metric">
+            <dt class="mono">描画スケール</dt>
+            <dd id="metric-gl-scale" class="mono">—</dd>
+          </div>
+          <div class="lab-metric">
+            <dt class="mono">ネットワーク</dt>
+            <dd id="metric-net" class="mono">—</dd>
+          </div>
+          <div class="lab-metric">
+            <dt class="mono">可視性</dt>
+            <dd id="metric-vis" class="mono">—</dd>
+          </div>
+          <div class="lab-metric">
+            <dt class="mono">動きの設定</dt>
+            <dd id="metric-motion" class="mono">—</dd>
+          </div>
+          <div class="lab-metric">
+            <dt class="mono">SW 状態</dt>
+            <dd id="metric-sw" class="mono">—</dd>
+          </div>
+        </dl>
+        <p class="lab-deck__hint mono" data-reveal>
+          <kbd>Ctrl</kbd>+<kbd>K</kbd> コマンド一覧 · <kbd>?</kbd> ショートカットヘルプ
+        </p>
+      </section>
+
+      <footer class="contact" id="contact">
+        <p class="contact-deco mono" data-reveal>// EOT — 送信はまだ行いません</p>
+        <h2 data-reveal>次の実験へ</h2>
+        <p data-reveal>
+          このページはデモ用の静的成果物です。本番では計測の匿名化、同意取得、エッジでのキャッシュ戦略を別レイヤーで設計してください。
+        </p>
+        <a class="cta" href="#top" data-reveal>先頭へ戻る</a>
+      </footer>
+    </main>
+
+    <dialog class="log-dialog" id="log-dialog" aria-labelledby="log-dialog-title">
+      <div class="log-dialog__inner">
+        <header class="log-dialog__head">
+          <h2 id="log-dialog-title" class="log-dialog__title mono">観測ログ</h2>
+          <button type="button" class="log-dialog__close" id="log-dialog-close" aria-label="ダイアログを閉じる">
+            ×
+          </button>
+        </header>
+        <pre class="log-dialog__body mono" id="log-dialog-body"></pre>
+        <footer class="log-dialog__foot">
+          <button type="button" class="log-dialog__copy mono" id="log-dialog-copy">クリップボードへ複製</button>
+        </footer>
+      </div>
+    </dialog>
+
+    <dialog class="cmdk" id="cmdk" aria-labelledby="cmdk-title">
+      <div class="cmdk__panel" role="document">
+        <label class="cmdk__label mono" id="cmdk-title" for="cmdk-input">ジャンプ / アクション</label>
+        <input
+          id="cmdk-input"
+          class="cmdk__input mono"
+          type="search"
+          autocomplete="off"
+          spellcheck="false"
+          placeholder="セクション名や log と入力"
+        />
+        <ul class="cmdk__list" id="cmdk-list" role="listbox"></ul>
+        <p class="cmdk__footer mono">↑↓ で選択 · Enter で実行 · Esc で閉じる</p>
+      </div>
+    </dialog>
+
+    <dialog class="help-dialog" id="help-dialog" aria-labelledby="help-title">
+      <div class="help-dialog__inner">
+        <header class="help-dialog__head">
+          <h2 id="help-title" class="help-dialog__title">キーボードショートカット</h2>
+          <button type="button" class="help-dialog__close" id="help-close" aria-label="閉じる">×</button>
+        </header>
+        <ul class="help-list">
+          <li><kbd>Ctrl</kbd> + <kbd>K</kbd> — コマンドパレットの表示切替</li>
+          <li><kbd>?</kbd> — このヘルプ（入力中は無効）</li>
+          <li><kbd>Esc</kbd> — 開いているダイアログを閉じる</li>
+        </ul>
+      </div>
+    </dialog>
+
+    <noscript>
+      <div class="noscript-banner" role="alert">
+        JavaScript が無効です。本文は閲覧できますが、計測・背景・ダイアログは動作しません。
+      </div>
+    </noscript>
+
+    <script src="main.js" defer></script>
+  </body>
+</html>
