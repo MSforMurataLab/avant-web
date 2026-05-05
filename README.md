@@ -30,7 +30,7 @@ export PATH="/c/Program Files/nodejs:$PATH"
 npm run server
 ```
 
-または `./server.sh`（プロキシ）・`bash dev.sh`（Vite。事前に `npm ci` は PowerShell や PATH が通ったターミナルで実行）。
+または **`bash server.sh`**（プロキシ）・**`bash dev.sh`**（Vite）。Git Bash に npm が無くても、`cmd.exe` 経由で Windows の npm を呼び出します（事前の `npm ci` は PowerShell などで一度だけ）。
 
 ターミナル 1（プロキシ）:
 
