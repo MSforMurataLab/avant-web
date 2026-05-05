@@ -17,6 +17,35 @@ const GEMINI_API_ROOT =
 const DEFAULT_MODEL = process.env.GEMINI_MODEL || "gemini-2.5-flash";
 const ALLOW = process.env.CORS_ALLOW_ORIGIN || "*";
 const SCENARIO_DAILY_LIMIT = Number(process.env.SCENARIO_QUOTA_PER_DAY || 3);
+/** Gemini が 503 / UNAVAILABLE などで落ちるときの再試行回数（計 MAX_ATTEMPTS 回リクエスト） */
+const GEMINI_MAX_ATTEMPTS = Math.min(10, Math.max(1, Number(process.env.GEMINI_MAX_ATTEMPTS || 5)));
+
+/** @param {number} ms */
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/**
+ * 指数バックオフに載せてよいエラーか（キー不正・404 などは false）
+ * @param {number} httpStatus
+ * @param {string} bodyText
+ */
+function geminiTransientFailure(httpStatus, bodyText) {
+  if (httpStatus === 401 || httpStatus === 403 || httpStatus === 404 || httpStatus === 400) return false;
+  if (httpStatus === 503 || httpStatus === 500 || httpStatus === 502) return true;
+  if (httpStatus === 429) return true;
+  try {
+    const o = JSON.parse(bodyText);
+    const err = o && typeof o === "object" && "error" in o ? /** @type {{ error?: { status?: string; message?: string } }} */ (o).error : undefined;
+    const st = typeof err?.status === "string" ? err.status : "";
+    if (st === "UNAVAILABLE" || st === "RESOURCE_EXHAUSTED") return true;
+    const msg = typeof err?.message === "string" ? err.message : "";
+    if (/high demand|try again later|overloaded|temporarily unavailable|UNAVAILABLE/i.test(msg)) return true;
+    return false;
+  } catch {
+    return httpStatus >= 500;
+  }
+}
 
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -314,14 +343,35 @@ const server = http.createServer((req, res) => {
         }
 
         const url = `${GEMINI_API_ROOT}/models/${encodeURIComponent(modelId)}:generateContent?key=${encodeURIComponent(API_KEY)}`;
+        const payloadJson = JSON.stringify(geminiBody);
 
-        let upstream;
+        let responseText = "";
+
         try {
-          upstream = await fetch(url, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(geminiBody),
-          });
+          for (let attempt = 1; attempt <= GEMINI_MAX_ATTEMPTS; attempt++) {
+            const upstream = await fetch(url, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: payloadJson,
+            });
+            responseText = await upstream.text();
+
+            if (upstream.ok) break;
+
+            const retry =
+              attempt < GEMINI_MAX_ATTEMPTS && geminiTransientFailure(upstream.status, responseText);
+            if (!retry) {
+              res.writeHead(upstream.status, { "Content-Type": "application/json; charset=utf-8" });
+              res.end(responseText || JSON.stringify({ error: `Gemini API ${upstream.status}` }));
+              return;
+            }
+
+            const backoffMs = Math.min(12_000, 450 * 2 ** (attempt - 1)) + Math.floor(Math.random() * 500);
+            console.error(
+              `[gemini-proxy] ${upstream.status} 一時エラー → ${backoffMs}ms 後に再試行 (${attempt}/${GEMINI_MAX_ATTEMPTS})`
+            );
+            await sleep(backoffMs);
+          }
         } catch (e) {
           res.writeHead(502, { "Content-Type": "application/json; charset=utf-8" });
           res.end(
@@ -329,14 +379,6 @@ const server = http.createServer((req, res) => {
               error: e instanceof Error ? e.message : String(e),
             })
           );
-          return;
-        }
-
-        const responseText = await upstream.text();
-
-        if (!upstream.ok) {
-          res.writeHead(upstream.status, { "Content-Type": "application/json; charset=utf-8" });
-          res.end(responseText || JSON.stringify({ error: `Gemini API ${upstream.status}` }));
           return;
         }
 
