@@ -25,8 +25,57 @@
       href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Syne:wght@400;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap"
       rel="stylesheet"
     />
+    <style id="boot-critical-styles">
+      #app-boot-screen {
+        position: fixed;
+        inset: 0;
+        z-index: 2147483647;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0;
+        padding: clamp(1rem, 4vw, 2rem);
+        background: #030306;
+        color: #e8e6ef;
+        font-family: system-ui, sans-serif;
+      }
+      #app-boot-screen * {
+        box-sizing: border-box;
+      }
+    </style>
   </head>
   <body>
+    <div
+      id="app-boot-screen"
+      class="app-boot"
+      aria-busy="true"
+      aria-live="polite"
+      aria-label="アプリケーションを読み込み中"
+    >
+      <div class="app-boot__hex" aria-hidden="true"></div>
+      <div class="app-boot__vignette" aria-hidden="true"></div>
+      <div class="app-boot__noise" aria-hidden="true"></div>
+      <div class="app-boot__scanline" aria-hidden="true"></div>
+      <div class="app-boot__frame">
+        <div class="app-boot__ticks" aria-hidden="true">
+          <span></span><span></span><span></span><span></span>
+        </div>
+        <div class="app-boot__inner">
+          <div class="app-boot__glyph" aria-hidden="true">
+            <span class="app-boot__pulse"></span>
+          </div>
+          <p class="app-boot__eyebrow">Call of Cthulhu · 6th Edition — Solo Protocol</p>
+          <h1 class="app-boot__title">Solo CoC6</h1>
+          <p class="app-boot__tag">Neural GM Link · Secure Proxy Channel</p>
+          <div class="app-boot__track" role="progressbar" aria-valuetext="初期化中">
+            <div class="app-boot__bar"></div>
+          </div>
+          <p class="app-boot__status">セッション環境を同期しています…</p>
+          <p class="app-boot__hint">STATIC SHELL · WEBGL FIELD OPTIONAL · API ONLINE REQUIRED</p>
+        </div>
+      </div>
+    </div>
+
     <a class="skip-link" href="#main">本文へスキップ</a>
     <canvas id="field" aria-hidden="true"></canvas>
     <div class="grain" aria-hidden="true"></div>
@@ -260,7 +309,7 @@
           </summary>
           <div class="coc-rules-body">
             <p>
-              特性は 3d6／2d6+6／3d6+3 で算出し、HP は ceil((CON+SIZ)/10)、MP=POW、SAN 上限=POW×5、アイデア=INT×5、知識=EDU×5、幸運=(3d6)×5
+              特性は 3d6／2d6+6／3d6+3 で算出し、HP は第7版と同様に floor((CON+SIZ)/5)（最小1）、MP=POW、SAN 上限=POW×5、アイデア=INT×5、知識=EDU×5、幸運=(3d6)×5
               としています。技能成功率はレギュラー／ハード（半値・整数切り捨て）／極限（五分之一・最小1）／01 の決定的成功／ファンブル（技能値に応じた96+/100）を実装しています。
             </p>
             <p>

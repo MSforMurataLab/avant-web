@@ -16,6 +16,34 @@ import { scrollPercentFromDocument } from "../lib/scroll";
 
 const SCENE_ADVANCE_MARKER = "<<<SCENE_NEXT>>>";
 
+/** フォント・レイアウト確定までフルスクリーンローダーを表示し、FOUC を隠す */
+async function runBootDismissal(): Promise<void> {
+  const el = document.getElementById("app-boot-screen");
+  if (!el) return;
+  const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  try {
+    await document.fonts.ready;
+  } catch {
+    /* ignore */
+  }
+  await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+  await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+  const holdMs = reduced ? 120 : 560;
+  await new Promise<void>((resolve) => setTimeout(resolve, holdMs));
+
+  const critical = document.getElementById("boot-critical-styles");
+  el.classList.add("app-boot--hide");
+  let cleaned = false;
+  const cleanup = (): void => {
+    if (cleaned) return;
+    cleaned = true;
+    el.remove();
+    critical?.remove();
+  };
+  el.addEventListener("transitionend", cleanup, { once: true });
+  setTimeout(cleanup, reduced ? 200 : 1100);
+}
+
 function stripSceneAdvance(raw: string): { text: string; advanced: boolean } {
   const advanced = raw.includes(SCENE_ADVANCE_MARKER);
   const text = raw.split(SCENE_ADVANCE_MARKER).join("").trim();
@@ -33,6 +61,8 @@ function readLlmOptions(): { model?: string } {
 
 export function mountCocApp(): void {
   const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+
+  void runBootDismissal();
 
   /* --- PWA（オフラインは静的シェル。API 呼び出しはオンライン必須） --- */
   registerSW({ immediate: true });
@@ -296,6 +326,12 @@ export function mountCocApp(): void {
 
     elSetup?.setAttribute("hidden", "true");
     elPlay?.removeAttribute("hidden");
+
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        elPlay?.scrollIntoView({ block: "start", behavior: "auto" });
+      });
+    });
 
     const bootstrap =
       `[セッション開始]\n${buildSceneUserPrefix(0, scenario)}\nオープニング描写と、プレイヤーの最初の行動を促す一文をお願いします。`;

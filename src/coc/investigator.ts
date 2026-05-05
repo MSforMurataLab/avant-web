@@ -61,10 +61,13 @@ export function rollRandomStats(): Stats {
   };
 }
 
-/** HP = ceil((CON+SIZ)/10), MP = POW, SAN 現在地は上限 POW×5 から開始 */
+/**
+ * HP は第7版と同様に floor((CON+SIZ)/5)（最小1）。
+ * 第6版の ceil((CON+SIZ)/10) は平均 HP が 2〜4 程度になりソロで過度に脆弱なため、耐久のみこの算出に寄せています。
+ */
 export function buildInvestigator(name?: string): Investigator {
   const stats = rollRandomStats();
-  const hpMax = Math.max(1, Math.ceil((stats.con + stats.siz) / 10));
+  const hpMax = Math.max(1, Math.floor((stats.con + stats.siz) / 5));
   const sanMax = stats.pow * 5;
   const luck = sumDice(rollNdM(3, 6)) * 5;
 
