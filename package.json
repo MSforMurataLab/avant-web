@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "server": "node server/proxy.mjs",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview --base /avant-web/",
     "lint": "eslint .",

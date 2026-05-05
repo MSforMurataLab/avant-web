@@ -14,7 +14,7 @@
     <meta property="og:title" content="Solo CoC6 — AI ゲームマスター（ソロ専用）" />
     <meta
       property="og:description"
-      content="第6版ルールに沿った技能判定と、制約付き短期シナリオ生成。APIキーはブラウザからご利用のプロバイダへ送信されます。"
+      content="第6版ルールに沿った技能判定と、制約付き短期シナリオ生成。LLM 呼び出しは運営側のサーバーがプロキシします。"
     />
     <meta property="og:locale" content="ja_JP" />
     <title>Solo CoC6 — AI ゲームマスター（ソロ専用）</title>
@@ -59,29 +59,20 @@
         </p>
         <div class="coc-warn" role="note">
           <strong>重要:</strong>
-          OpenAI 互換 API キーをブラウザに入力すると、キーはクライアントから直接プロバイダへ送信されます。公開リポジトリや共有PCでは利用しないでください。生成シナリオは架空のオリジナルであり、商業シナリオやルールブックの転載ではありません。判定・SAN・戦闘の最終解釈はテーブル合意が前提です。
+          LLM の API キーはサーバー側だけに置き、ブラウザからはプロキシ経由で呼び出します（BYOK ではありません）。プロキシは公開するとトークン課金を第三者に使われる恐れがあるため、必ず独自ホストし CORS・監視を設定してください。生成シナリオは架空のオリジナルであり、商業シナリオやルールブックの転載ではありません。判定・SAN・戦闘の最終解釈はテーブル合意が前提です。
         </div>
       </section>
 
       <section id="coc-setup" class="coc-setup">
         <div class="coc-panel">
-          <h2>API 設定</h2>
-          <div class="coc-field">
-            <label for="coc-api-base">ベース URL（OpenAI 互換）</label>
-            <input id="coc-api-base" type="url" value="https://api.openai.com/v1" autocomplete="off" />
-          </div>
+          <h2>モデル（任意）</h2>
+          <p class="coc-field" style="font-size: 0.78rem; opacity: 0.85; margin: 0 0 0.5rem">
+            空のままならサーバーの既定モデル（環境変数 OPENAI_MODEL）が使われます。異なるモデルを試すときだけ入力してください。
+          </p>
           <div class="coc-field">
             <label for="coc-model">モデル ID</label>
-            <input id="coc-model" type="text" value="gpt-4o-mini" autocomplete="off" />
+            <input id="coc-model" type="text" value="" autocomplete="off" placeholder="例: gpt-4o-mini（未入力でサーバー既定）" />
           </div>
-          <div class="coc-field">
-            <label for="coc-api-key">API キー</label>
-            <input id="coc-api-key" type="password" autocomplete="off" placeholder="sk-..." />
-          </div>
-          <label class="coc-field" style="display: flex; align-items: center; gap: 0.5rem">
-            <input id="coc-remember-key" type="checkbox" />
-            <span style="font-family: var(--font-mono); font-size: 0.68rem">このブラウザのセッション内でのみ記憶</span>
-          </label>
         </div>
 
         <div class="coc-panel">

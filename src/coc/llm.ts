@@ -1,28 +1,27 @@
 export type ChatMessage = { role: "system" | "user" | "assistant"; content: string };
 
-export interface LlmConfig {
-  apiKey: string;
-  baseUrl: string;
-  model: string;
+/** ブラウザからサーバーへ渡すオプション（キーは含めない） */
+export interface LlmClientOptions {
+  /** 未指定時はサーバー環境変数 OPENAI_MODEL の既定値 */
+  model?: string;
 }
 
-export async function chatCompletionJson(config: LlmConfig, system: string, user: string): Promise<string> {
-  const url = `${config.baseUrl.replace(/\/$/, "")}/chat/completions`;
-  const res = await fetch(url, {
+function resolveLlmChatUrl(): string {
+  const envBase = import.meta.env.VITE_LLM_API_BASE?.trim();
+  if (envBase) return `${envBase.replace(/\/$/, "")}/chat`;
+  return new URL("api/llm/chat", `${window.location.origin}${import.meta.env.BASE_URL}`).href;
+}
+
+async function postChatCompletion(body: {
+  model?: string;
+  temperature: number;
+  messages: ChatMessage[];
+  response_format?: { type: string };
+}): Promise<string> {
+  const res = await fetch(resolveLlmChatUrl(), {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${config.apiKey}`,
-    },
-    body: JSON.stringify({
-      model: config.model,
-      temperature: 0.65,
-      messages: [
-        { role: "system", content: system },
-        { role: "user", content: user },
-      ],
-      response_format: { type: "json_object" },
-    }),
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
   });
 
   if (!res.ok) {
@@ -36,38 +35,34 @@ export async function chatCompletionJson(config: LlmConfig, system: string, user
   const content = data.choices?.[0]?.message?.content;
   if (!content) throw new Error("応答に content がありません");
   return content;
+}
+
+export async function chatCompletionJson(
+  opts: LlmClientOptions | undefined,
+  system: string,
+  user: string
+): Promise<string> {
+  return postChatCompletion({
+    ...(opts?.model ? { model: opts.model } : {}),
+    temperature: 0.65,
+    messages: [
+      { role: "system", content: system },
+      { role: "user", content: user },
+    ],
+    response_format: { type: "json_object" },
+  });
 }
 
 export async function chatCompletionText(
-  config: LlmConfig,
+  opts: LlmClientOptions | undefined,
   messages: ChatMessage[],
   temperature = 0.75
 ): Promise<string> {
-  const url = `${config.baseUrl.replace(/\/$/, "")}/chat/completions`;
-  const res = await fetch(url, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${config.apiKey}`,
-    },
-    body: JSON.stringify({
-      model: config.model,
-      temperature,
-      messages,
-    }),
+  return postChatCompletion({
+    ...(opts?.model ? { model: opts.model } : {}),
+    temperature,
+    messages,
   });
-
-  if (!res.ok) {
-    const t = await res.text();
-    throw new Error(`API ${res.status}: ${t.slice(0, 400)}`);
-  }
-
-  const data = (await res.json()) as {
-    choices?: Array<{ message?: { content?: string } }>;
-  };
-  const content = data.choices?.[0]?.message?.content;
-  if (!content) throw new Error("応答に content がありません");
-  return content;
 }
 
 /** ```json ... ``` でラップされていてもパースできるように抽出を試みる */

@@ -37,6 +37,8 @@ jobs:
         run: npm run test -- --run
 
       - name: Build
+        env:
+          VITE_LLM_API_BASE: ${{ secrets.VITE_LLM_API_BASE }}
         run: npm run build
 
       - name: Configure Pages

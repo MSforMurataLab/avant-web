@@ -16,8 +16,6 @@ import { scrollPercentFromDocument } from "../lib/scroll";
 
 const SCENE_ADVANCE_MARKER = "<<<SCENE_NEXT>>>";
 
-const STORAGE_KEY = "avant-coc-llm-key";
-
 function stripSceneAdvance(raw: string): { text: string; advanced: boolean } {
   const advanced = raw.includes(SCENE_ADVANCE_MARKER);
   const text = raw.split(SCENE_ADVANCE_MARKER).join("").trim();
@@ -28,12 +26,9 @@ function $(id: string): HTMLElement | null {
   return document.getElementById(id);
 }
 
-function readConfig(): { apiKey: string; baseUrl: string; model: string } {
-  const apiKey = ($("coc-api-key") as HTMLInputElement | null)?.value.trim() ?? "";
-  const baseUrl =
-    ($("coc-api-base") as HTMLInputElement | null)?.value.trim() || "https://api.openai.com/v1";
-  const model = ($("coc-model") as HTMLInputElement | null)?.value.trim() || "gpt-4o-mini";
-  return { apiKey, baseUrl, model };
+function readLlmOptions(): { model?: string } {
+  const model = ($("coc-model") as HTMLInputElement | null)?.value.trim();
+  return model ? { model } : {};
 }
 
 export function mountCocApp(): void {
@@ -144,31 +139,6 @@ export function mountCocApp(): void {
     elChatLog.scrollTop = elChatLog.scrollHeight;
   }
 
-  function restoreApiKey(): void {
-    const inp = $("coc-api-key") as HTMLInputElement | null;
-    const ck = $("coc-remember-key") as HTMLInputElement | null;
-    try {
-      const v = sessionStorage.getItem(STORAGE_KEY);
-      if (v && inp) inp.value = v;
-      if (ck) ck.checked = !!v;
-    } catch {
-      /* ignore */
-    }
-  }
-
-  function persistApiKey(): void {
-    const inp = $("coc-api-key") as HTMLInputElement | null;
-    const ck = $("coc-remember-key") as HTMLInputElement | null;
-    try {
-      if (ck?.checked && inp?.value) sessionStorage.setItem(STORAGE_KEY, inp.value);
-      else sessionStorage.removeItem(STORAGE_KEY);
-    } catch {
-      /* ignore */
-    }
-  }
-
-  restoreApiKey();
-
   $("coc-btn-roll-inv")?.addEventListener("click", () => {
     const nameInp = $("coc-inv-name") as HTMLInputElement | null;
     inv = buildInvestigator(nameInp?.value);
@@ -177,12 +147,7 @@ export function mountCocApp(): void {
   });
 
   $("coc-btn-gen-scenario")?.addEventListener("click", async () => {
-    const cfg = readConfig();
-    if (!cfg.apiKey) {
-      setStatus("API キーを入力してください。");
-      return;
-    }
-    persistApiKey();
+    const llmOpts = readLlmOptions();
 
     const sceneCount = parseInt(($("coc-scene-count") as HTMLSelectElement).value, 10);
     const era = ($("coc-era") as HTMLSelectElement).value;
@@ -199,7 +164,7 @@ export function mountCocApp(): void {
     setStatus("シナリオ生成中…（JSON）");
     $("coc-btn-gen-scenario")?.setAttribute("disabled", "true");
     try {
-      const raw = await chatCompletionJson(cfg, SCENARIO_SYSTEM_PROMPT, buildScenarioUserPrompt(constraints));
+      const raw = await chatCompletionJson(llmOpts, SCENARIO_SYSTEM_PROMPT, buildScenarioUserPrompt(constraints));
       let parsed: unknown;
       try {
         parsed = parseJsonLoose(raw);
@@ -258,12 +223,12 @@ export function mountCocApp(): void {
   });
 
   async function assistantTurn(): Promise<void> {
-    const cfg = readConfig();
+    const llmOpts = readLlmOptions();
     const msgs: ChatMessage[] = [{ role: "system", content: gmSystemCached }, ...messagesHistory];
     setStatus("GM が応答を生成中…");
     $("coc-btn-send")?.setAttribute("disabled", "true");
     try {
-      const raw = await chatCompletionText(cfg, msgs);
+      const raw = await chatCompletionText(llmOpts, msgs);
       const { text, advanced } = stripSceneAdvance(raw);
       messagesHistory.push({ role: "assistant", content: text });
       appendChat("gm", text);
@@ -283,13 +248,6 @@ export function mountCocApp(): void {
     if (!elChatInput || !scenario || !inv) return;
     const t = elChatInput.value.trim();
     if (!t) return;
-    const cfg = readConfig();
-    if (!cfg.apiKey) {
-      setStatus("API キーを入力してください。");
-      return;
-    }
-    persistApiKey();
-
     const prefixed =
       `${buildSceneUserPrefix(sceneIndex, scenario)}\n\n${t}`;
     messagesHistory.push({ role: "user", content: prefixed });
@@ -300,12 +258,6 @@ export function mountCocApp(): void {
 
   $("coc-btn-advance")?.addEventListener("click", async () => {
     if (!scenario || !inv) return;
-    const cfg = readConfig();
-    if (!cfg.apiKey) {
-      setStatus("API キーを入力してください。");
-      return;
-    }
-    persistApiKey();
     const msg =
       "[システム] プレイヤーは次シーンへ進行してよいと判断しました。終了条件を確認し、適切なら <<<SCENE_NEXT>>> を文末に付けて次シーンへ誘導してください。";
     messagesHistory.push({ role: "user", content: msg });
@@ -314,16 +266,10 @@ export function mountCocApp(): void {
   });
 
   $("coc-btn-start")?.addEventListener("click", async () => {
-    const cfg = readConfig();
-    if (!cfg.apiKey) {
-      setStatus("API キーを入力してください。");
-      return;
-    }
     if (!inv || !scenario) {
       setStatus("調査員とシナリオの両方を準備してください。");
       return;
     }
-    persistApiKey();
 
     gmSystemCached = buildGmSystemPrompt(inv, scenario);
     gmSystemCached += `\n\n場面進行の末尾に次シーンへ進んだときだけ ${SCENE_ADVANCE_MARKER} を付記してください。`;

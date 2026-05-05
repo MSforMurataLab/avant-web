@@ -6,6 +6,14 @@ const BASE = "/avant-web/";
 
 export default defineConfig({
   base: BASE,
+  server: {
+    proxy: {
+      "/api/llm": {
+        target: "http://127.0.0.1:8787",
+        changeOrigin: true,
+      },
+    },
+  },
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "src"),
