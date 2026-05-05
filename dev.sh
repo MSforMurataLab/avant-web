@@ -15,19 +15,4 @@ for d in "${NODE_DIRS[@]}"; do
   fi
 done
 
-run_via_windows_cmd() {
-  if ! command -v cygpath >/dev/null 2>&1; then
-    echo "cygpath が見つかりません。PowerShell または「Node の PATH が通ったターミナル」で npm run dev を実行してください。" >&2
-    exit 127
-  fi
-  local root_win
-  root_win=$(cygpath -w "$ROOT")
-  exec cmd.exe //c "cd /d \"$root_win\" && npm run dev"
-}
-
-if command -v npm >/dev/null 2>&1; then
-  exec npm run dev
-fi
-
-echo "[dev.sh] Git Bash の PATH に npm がありません。Windows の PATH で npm を起動します。" >&2
-run_via_windows_cmd
+exec npm run dev
