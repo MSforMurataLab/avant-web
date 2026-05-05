@@ -3,14 +3,17 @@ import { defineConfig } from "vite";
 import { VitePWA } from "vite-plugin-pwa";
 
 const BASE = "/avant-web/";
+/** dev サーバー上では fetch が BASE_URL 付き（例: /avant-web/api/llm/chat）になるため、プロキシも同一パスで取り、ローカルプロキシのパスへ書き換える */
+const BASE_PATH = BASE.replace(/\/$/, "");
 
 export default defineConfig({
   base: BASE,
   server: {
     proxy: {
-      "/api/llm": {
+      [`${BASE_PATH}/api/llm`]: {
         target: "http://127.0.0.1:8787",
         changeOrigin: true,
+        rewrite: (path) => path.slice(BASE_PATH.length),
       },
     },
   },

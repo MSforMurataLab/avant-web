@@ -42,7 +42,7 @@ npm run server              # 既定 http://127.0.0.1:8787（.env を読込）
 
 ```bash
 npm ci
-npm run dev                     # /api/llm を上記プロキシへ転送（vite.config.ts）
+npm run dev                     # /avant-web/api/llm → 127.0.0.1:8787/api/llm に転送（vite.config.ts）
 ```
 
 本番相当ビルド:
