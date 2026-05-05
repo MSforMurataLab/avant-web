@@ -16,10 +16,10 @@ export default defineConfig({
       registerType: "autoUpdate",
       includeAssets: ["icon.svg"],
       manifest: {
-        name: "株式会社 AVANT",
-        short_name: "AVANT",
+        name: "Solo CoC6 AI GM",
+        short_name: "CoC6 Solo",
         description:
-          "ブランド体験とデジタルプロダクトの設計・制作。クリエイティブスタジオ公式サイト。",
+          "クトゥルフ神話TRPG第6版準拠のソロ専用AIゲームマスター。制約付きシナリオ生成と対話進行。",
         lang: "ja",
         start_url: BASE,
         scope: BASE,

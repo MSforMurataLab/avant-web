@@ -1,0 +1,293 @@
+/* CoC ソロ GM アプリ用レイアウト */
+
+.coc-grid {
+  position: relative;
+  z-index: 2;
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 5rem clamp(1rem, 4vw, 2rem) 4rem;
+}
+
+.coc-hero {
+  margin-bottom: 2.5rem;
+}
+
+.coc-hero h1 {
+  margin: 0 0 0.75rem;
+  font-size: clamp(1.75rem, 4vw, 2.35rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+.coc-lede {
+  margin: 0;
+  max-width: 46rem;
+  color: var(--fg-muted);
+  font-size: 0.98rem;
+}
+
+.coc-warn {
+  margin-top: 1.25rem;
+  padding: 1rem 1.15rem;
+  border: 1px solid rgba(255, 45, 106, 0.35);
+  background: rgba(255, 45, 106, 0.06);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  line-height: 1.55;
+  letter-spacing: 0.04em;
+  color: var(--fg-muted);
+}
+
+.coc-setup {
+  display: grid;
+  gap: 1.5rem;
+}
+
+@media (min-width: 900px) {
+  .coc-setup {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.coc-panel {
+  border: 1px solid var(--border);
+  background: var(--bg-elevated);
+  padding: 1.25rem 1.35rem;
+}
+
+.coc-panel h2 {
+  margin: 0 0 1rem;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+
+.coc-field {
+  margin-bottom: 0.85rem;
+}
+
+.coc-field label {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.14em;
+  color: var(--fg-muted);
+  margin-bottom: 0.35rem;
+}
+
+.coc-field input[type="text"],
+.coc-field input[type="password"],
+.coc-field input[type="url"],
+.coc-field select,
+.coc-field textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.55rem 0.65rem;
+  border: 1px solid var(--border);
+  background: rgba(0, 0, 0, 0.35);
+  color: var(--fg);
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+}
+
+.coc-field textarea {
+  min-height: 4rem;
+  resize: vertical;
+}
+
+.coc-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  margin-top: 1rem;
+}
+
+.coc-btn {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.14em;
+  padding: 0.65rem 1rem;
+  border: 1px solid var(--border);
+  background: rgba(0, 255, 200, 0.12);
+  color: var(--fg);
+  cursor: pointer;
+  transition:
+    background 0.2s ease,
+    transform 0.2s var(--ease-out-expo);
+}
+
+.coc-btn:hover,
+.coc-btn:focus-visible {
+  background: rgba(0, 255, 200, 0.22);
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.coc-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.coc-btn--danger {
+  background: rgba(255, 45, 106, 0.12);
+}
+
+.coc-btn--danger:hover {
+  background: rgba(255, 45, 106, 0.22);
+}
+
+.coc-sheet {
+  margin: 0;
+  padding: 0.85rem;
+  max-height: 320px;
+  overflow: auto;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  line-height: 1.45;
+  color: var(--fg-muted);
+  border: 1px solid var(--border);
+  background: rgba(0, 0, 0, 0.35);
+  white-space: pre-wrap;
+}
+
+.coc-status {
+  margin-top: 0.75rem;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  color: var(--accent-hot);
+  min-height: 1.25em;
+}
+
+.coc-play {
+  margin-top: 2rem;
+  display: grid;
+  gap: 1rem;
+}
+
+@media (min-width: 960px) {
+  .coc-play {
+    grid-template-columns: minmax(0, 1fr) 280px;
+    align-items: start;
+  }
+}
+
+.coc-chat {
+  border: 1px solid var(--border);
+  background: var(--bg-elevated);
+  display: flex;
+  flex-direction: column;
+  min-height: 420px;
+}
+
+.coc-chat-log {
+  flex: 1;
+  overflow: auto;
+  padding: 1rem;
+  max-height: min(62vh, 640px);
+}
+
+.coc-msg {
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid rgba(232, 230, 239, 0.06);
+}
+
+.coc-msg:last-child {
+  border-bottom: none;
+}
+
+.coc-msg-role {
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  letter-spacing: 0.22em;
+  color: var(--accent);
+  margin-bottom: 0.35rem;
+}
+
+.coc-msg-role.user {
+  color: var(--accent-hot);
+}
+
+.coc-msg-body {
+  font-size: 0.92rem;
+  line-height: 1.6;
+  color: var(--fg);
+  white-space: pre-wrap;
+}
+
+.coc-chat-input {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  border-top: 1px solid var(--border);
+}
+
+.coc-chat-input textarea {
+  flex: 1;
+  min-height: 3rem;
+  resize: vertical;
+  padding: 0.55rem 0.65rem;
+  border: 1px solid var(--border);
+  background: rgba(0, 0, 0, 0.35);
+  color: var(--fg);
+  font-family: inherit;
+  font-size: 0.88rem;
+}
+
+.coc-side {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.coc-statline {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.05em;
+  margin: 0.2rem 0;
+  color: var(--fg-muted);
+}
+
+.coc-dice-log {
+  margin: 0;
+  padding: 0.65rem;
+  max-height: 200px;
+  overflow: auto;
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  line-height: 1.45;
+  color: var(--fg-muted);
+  border: 1px solid var(--border);
+  background: rgba(0, 0, 0, 0.35);
+}
+
+.coc-rules {
+  margin-top: 3rem;
+  padding-top: 2rem;
+  border-top: 1px solid var(--border);
+}
+
+.coc-rules summary {
+  cursor: pointer;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.coc-rules-body {
+  margin-top: 1rem;
+  color: var(--fg-muted);
+  font-size: 0.88rem;
+  line-height: 1.65;
+}
+
+.mark-pulse {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-decoration: none;
+  color: var(--fg);
+}
