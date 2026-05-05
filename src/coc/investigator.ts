@@ -1,6 +1,9 @@
 import { rollInt, rollNdM, sumDice } from "./dice";
 
-/** CoC 第6版で広く用いられる特性ロール（3d6 / 2d6+6 / 3d6+3）。 */
+/**
+ * CoC 第7版の特性値（ページ参照用の数値そのもの）。
+ * STR/POW 等は (3d6 合計)×5 で 15〜90、SIZ/INT/EDU は (2d6+6 合計)×5 で 40〜90。
+ */
 export interface Stats {
   str: number;
   con: number;
@@ -20,23 +23,31 @@ export interface Investigator {
   mp: number;
   san: number;
   sanMax: number;
+  /** アイデアロールの目標値（第7版では INT 特性値と同一）。 */
   idea: number;
+  /** 知識ロールの目標値（第7版では EDU 特性値と同一）。 */
   knowledge: number;
   luck: number;
   /** 技能名 → %（初期値・プリセット） */
   skills: Record<string, number>;
 }
 
-function roll3d6(): number {
+function roll3d6Sum(): number {
   return sumDice(rollNdM(3, 6));
 }
 
-function roll2d6Plus6(): number {
+function roll2d6Plus6Sum(): number {
   return sumDice(rollNdM(2, 6)) + 6;
 }
 
-function roll3d6Plus3(): number {
-  return sumDice(rollNdM(3, 6)) + 3;
+/** STR, CON, POW, DEX, APP — (3d6)×5 */
+function rollStat3d6x5(): number {
+  return roll3d6Sum() * 5;
+}
+
+/** SIZ, INT, EDU — (2d6+6)×5 */
+function rollStat2d6Plus6x5(): number {
+  return roll2d6Plus6Sum() * 5;
 }
 
 const SAMPLE_NAMES = [
@@ -50,43 +61,47 @@ const SAMPLE_NAMES = [
 
 export function rollRandomStats(): Stats {
   return {
-    str: roll3d6(),
-    con: roll3d6(),
-    pow: roll3d6(),
-    dex: roll3d6(),
-    app: roll3d6(),
-    siz: roll2d6Plus6(),
-    int: roll2d6Plus6(),
-    edu: roll3d6Plus3(),
+    str: rollStat3d6x5(),
+    con: rollStat3d6x5(),
+    pow: rollStat3d6x5(),
+    dex: rollStat3d6x5(),
+    app: rollStat3d6x5(),
+    siz: rollStat2d6Plus6x5(),
+    int: rollStat2d6Plus6x5(),
+    edu: rollStat2d6Plus6x5(),
   };
 }
 
 /**
- * HP は第7版と同様に floor((CON+SIZ)/5)（最小1）。
- * 第6版の ceil((CON+SIZ)/10) は平均 HP が 2〜4 程度になりソロで過度に脆弱なため、耐久のみこの算出に寄せています。
+ * 派生ステータスは第7版キーパールールブックに準拠。
+ * HP = floor((CON+SIZ)/10)、MP = floor(POW/5)、開始 SAN = POW、アイデア・知識はそれぞれ INT・EDU と同一値。
  */
 export function buildInvestigator(name?: string): Investigator {
   const stats = rollRandomStats();
-  const hpMax = Math.max(1, Math.floor((stats.con + stats.siz) / 5));
-  const sanMax = stats.pow * 5;
-  const luck = sumDice(rollNdM(3, 6)) * 5;
+  const hpMax = Math.max(1, Math.floor((stats.con + stats.siz) / 10));
+  const mp = Math.max(1, Math.floor(stats.pow / 5));
+  const sanMax = stats.pow;
+  const luck = roll3d6Sum() * 5;
 
   const dex = stats.dex;
   const edu = stats.edu;
   const nm = name?.trim() || SAMPLE_NAMES[rollInt(0, SAMPLE_NAMES.length - 1)]!;
 
+  const dodge = Math.max(0, Math.floor(dex / 2));
+  const libraryUse = Math.min(99, edu);
+
   const skills: Record<string, number> = {
-    回避: Math.min(99, dex * 2),
+    回避: dodge,
     応急手当: 30,
     言いくるめ: 15,
-    説得: 20,
-    心理学: 15,
+    説得: 10,
+    心理学: 10,
     精神分析: 1,
     変装: 5,
     隠れる: 20,
     忍び歩き: 20,
     聞き耳: 25,
-    図書館: Math.min(99, edu + 10),
+    図書館: libraryUse,
     目星: 25,
     博物学: 10,
     追跡: 10,
@@ -103,7 +118,7 @@ export function buildInvestigator(name?: string): Investigator {
     ナイフ: 25,
     棍棒: 25,
     投擲: 20,
-    精神分析に対する抵抗: stats.pow * 5,
+    精神分析に対する抵抗: stats.pow,
   };
 
   return {
@@ -111,11 +126,11 @@ export function buildInvestigator(name?: string): Investigator {
     stats,
     hp: hpMax,
     hpMax,
-    mp: stats.pow,
+    mp,
     san: sanMax,
     sanMax,
-    idea: stats.int * 5,
-    knowledge: stats.edu * 5,
+    idea: stats.int,
+    knowledge: stats.edu,
     luck,
     skills,
   };

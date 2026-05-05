@@ -6,18 +6,18 @@
     <meta name="color-scheme" content="dark" />
     <meta
       name="description"
-      content="クトゥルフ神話TRPG第6版準拠のソロ専用AIゲームマスター。シーン数を固定した短編シナリオを生成し、対話で進行します。"
+      content="クトゥルフ神話TRPG第7版準拠のソロ専用AIゲームマスター。シーン数を固定した短編シナリオを生成し、対話で進行します。"
     />
     <meta name="theme-color" content="#030306" />
-    <meta name="application-name" content="Solo CoC6 GM" />
+    <meta name="application-name" content="Solo CoC7 GM" />
     <meta property="og:type" content="website" />
-    <meta property="og:title" content="Solo CoC6 — AI ゲームマスター（ソロ専用）" />
+    <meta property="og:title" content="Solo CoC7 — AI ゲームマスター（ソロ専用）" />
     <meta
       property="og:description"
-      content="第6版ルールに沿った技能判定と、制約付き短期シナリオ生成。LLM 呼び出しは運営側のサーバーがプロキシします。"
+      content="第7版ルールに沿った特性・派生ステータスと技能判定、制約付き短期シナリオ生成。LLM 呼び出しは運営側のサーバーがプロキシします。"
     />
     <meta property="og:locale" content="ja_JP" />
-    <title>Solo CoC6 — AI ゲームマスター（ソロ専用）</title>
+    <title>Solo CoC7 — AI ゲームマスター（ソロ専用）</title>
     <link rel="icon" href="/icon.svg" type="image/svg+xml" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -64,8 +64,8 @@
           <div class="app-boot__glyph" aria-hidden="true">
             <span class="app-boot__pulse"></span>
           </div>
-          <p class="app-boot__eyebrow">Call of Cthulhu · 6th Edition — Solo Protocol</p>
-          <h1 class="app-boot__title">Solo CoC6</h1>
+          <p class="app-boot__eyebrow">Call of Cthulhu · 7th Edition — Solo Protocol</p>
+          <h1 class="app-boot__title">Solo CoC7</h1>
           <p class="app-boot__tag">Neural GM Link · Secure Proxy Channel</p>
           <div class="app-boot__track" role="progressbar" aria-valuetext="初期化中">
             <div class="app-boot__bar"></div>
@@ -81,7 +81,7 @@
     <div class="grain" aria-hidden="true"></div>
 
     <header class="top coc-top">
-      <span class="mark-pulse coc-brand"><span class="pulse" aria-hidden="true"></span> Solo CoC6</span>
+      <span class="mark-pulse coc-brand"><span class="pulse" aria-hidden="true"></span> Solo CoC7</span>
       <nav class="nav coc-nav" aria-label="ページ内">
         <a class="coc-nav-link" href="#top">トップ</a>
         <a class="coc-nav-link" href="#coc-setup">準備</a>
@@ -92,8 +92,8 @@
 
     <div class="marquee coc-marquee" aria-hidden="true">
       <div class="marquee-track">
-        <span>ソロ専用 · 第6版準拠 · シーン固定シナリオ · クライアント判定 · サーバープロキシ · </span>
-        <span>ソロ専用 · 第6版準拠 · シーン固定シナリオ · クライアント判定 · サーバープロキシ · </span>
+        <span>ソロ専用 · 第7版準拠 · シーン固定シナリオ · クライアント判定 · サーバープロキシ · </span>
+        <span>ソロ専用 · 第7版準拠 · シーン固定シナリオ · クライアント判定 · サーバープロキシ · </span>
       </div>
     </div>
 
@@ -111,17 +111,17 @@
       <section class="coc-hero" id="top">
         <div class="coc-hero__grid">
           <div class="coc-hero__copy">
-            <p class="coc-eyebrow">Call of Cthulhu — 6th Edition · Solo Protocol</p>
+            <p class="coc-eyebrow">Call of Cthulhu — 7th Edition · Solo Protocol</p>
             <h1 class="coc-title">
               <span class="coc-title__line">クトゥルフ神話TRPG</span>
               <span class="coc-title__accent">ソロ専用 AI ゲームマスター</span>
             </h1>
             <p class="coc-lede">
-              調査員は常に<strong>1名</strong>。技能判定はこの UI の d100 で確定させ、結果をチャットへ貼ります。シナリオは LLM が
+              調査員は常に<strong>1名</strong>。特性・HP／MP／SAN などは<strong>第7版</strong>で算出し、技能判定はこの UI の d100 で確定させます。シナリオは LLM が
               <strong>指定シーン数だけ</strong>の構造化 JSON として生成し — GM はその枠から外れません。
             </p>
             <ul class="coc-hero-pills" aria-label="主要機能">
-              <li class="coc-pill">第6版ベース判定</li>
+              <li class="coc-pill">第7版ベース判定</li>
               <li class="coc-pill">短期シナリオ JSON</li>
               <li class="coc-pill">Gemini API（サーバープロキシ）</li>
               <li class="coc-pill">日次シナリオ上限</li>
@@ -305,12 +305,15 @@
         <details class="coc-details">
           <summary class="coc-details__summary">
             <span class="coc-details__icon" aria-hidden="true"></span>
-            第6版メモ（このサイトでの実装）
+            第7版メモ（このサイトでの実装）
           </summary>
           <div class="coc-rules-body">
             <p>
-              特性は 3d6／2d6+6／3d6+3 で算出し、HP は第7版と同様に floor((CON+SIZ)/5)（最小1）、MP=POW、SAN 上限=POW×5、アイデア=INT×5、知識=EDU×5、幸運=(3d6)×5
-              としています。技能成功率はレギュラー／ハード（半値・整数切り捨て）／極限（五分之一・最小1）／01 の決定的成功／ファンブル（技能値に応じた96+/100）を実装しています。
+              特性値は第7版どおり、STR・CON・POW・DEX・APP は（3d6 の合計）×5（15〜90）、SIZ・INT・EDU は（2d6+6 の合計）×5（40〜90）。HP は
+              floor((CON+SIZ)/10)（最小1）、MP は floor(POW/5)（最小1）、開始 SAN は POW と一致し SAN 上限も POW、幸運は（3d6 の合計）×5、アイデアロール目標は
+              INT、知識ロール目標は EDU（いずれも特性値そのもの）。プリセット技能はダッジ＝DEX÷2（切り捨て）、図書館初期値＝min(99,
+              EDU) など第7版の一般的な初期値に準じています。技能成功率はレギュラー／ハード（半値・整数切り捨て）／極限（五分之一・最小1）／01
+              の決定的成功／ファンブル（技能値に応じた96+/100）を実装しています。
             </p>
             <p>
               GM はプレイヤーの入力とシーン情報のみを参照します。公式シナリオや長編キャンペーンの複製は行いません。
@@ -320,7 +323,7 @@
       </section>
 
       <footer class="coc-footer">
-        <p class="coc-footer__mono">Solo CoC6 AI GM · Not affiliated with Chaosium Inc.</p>
+        <p class="coc-footer__mono">Solo CoC7 AI GM · Not affiliated with Chaosium Inc.</p>
         <p class="coc-footer__note">表示されているルール・名称は便宜であり、公式資料と異なる場合があります。</p>
       </footer>
     </main>

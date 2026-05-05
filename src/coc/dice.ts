@@ -1,4 +1,4 @@
-/** d100 および技能判定（CoC 第6版に準拠した一般的な解釈）。乱数は crypto.getRandomValues を使用。 */
+/** d100 および技能判定（CoC 第7版の一般的な解釈）。乱数は crypto.getRandomValues を使用。 */
 
 export function rollInt(min: number, max: number): number {
   const lo = Math.ceil(min);

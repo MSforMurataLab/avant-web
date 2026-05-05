@@ -27,10 +27,10 @@ export default defineConfig({
       registerType: "autoUpdate",
       includeAssets: ["icon.svg"],
       manifest: {
-        name: "Solo CoC6 AI GM",
-        short_name: "CoC6 Solo",
+        name: "Solo CoC7 AI GM",
+        short_name: "CoC7 Solo",
         description:
-          "クトゥルフ神話TRPG第6版準拠のソロ専用AIゲームマスター。制約付きシナリオ生成と対話進行。",
+          "クトゥルフ神話TRPG第7版準拠のソロ専用AIゲームマスター。制約付きシナリオ生成と対話進行。",
         lang: "ja",
         start_url: BASE,
         scope: BASE,
