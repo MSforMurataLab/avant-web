@@ -31,12 +31,32 @@ async function postChatCompletion(body: {
   /** サーバーがシナリオ生成回数を数えるときのみ付与（上流には転送しない） */
   _quota_bucket?: "scenario";
 }): Promise<string> {
-  const res = await fetch(resolveLlmChatUrl(), {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    credentials: "include",
-    body: JSON.stringify(body),
-  });
+  const url = resolveLlmChatUrl();
+  let res: Response;
+  try {
+    res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      mode: "cors",
+      body: JSON.stringify(body),
+    });
+  } catch (e) {
+    const pageOrigin = typeof window !== "undefined" ? window.location.origin : "";
+    throw new Error(
+      [
+        "プロキシへの通信がブラウザでブロックされました（Failed to fetch）。",
+        `POST 先: ${url}`,
+        pageOrigin
+          ? `Render の環境変数 CORS_ALLOW_ORIGIN に「${pageOrigin}」を追加してください（末尾スラッシュなし・GitHub Pages は https://ユーザーまたは組織名.github.io）。`
+          : "",
+        "あわせて VITE_LLM_API_BASE が https で始まっているか、Render が起動しているかを確認してください。",
+        `詳細: ${e instanceof Error ? e.message : String(e)}`,
+      ]
+        .filter(Boolean)
+        .join(" "),
+    );
+  }
 
   if (!res.ok) {
     const t = await res.text();

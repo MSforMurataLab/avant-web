@@ -147,12 +147,28 @@ function resolveQuotaSid(req, res) {
   return sid;
 }
 
+/** scheme+host のみに正規化（末尾スラッシュやパスを除去）。ブラウザの Origin と設定値のズレを吸収する */
+/** @param {string | undefined} raw */
+function normalizeOriginForCompare(raw) {
+  if (!raw || typeof raw !== "string") return "";
+  const t = raw.trim();
+  if (!t) return "";
+  try {
+    const u = new URL(t);
+    return `${u.protocol}//${u.host}`;
+  } catch {
+    return t.replace(/\/$/, "");
+  }
+}
+
 /** @param {string | undefined} origin */
 function allowOrigin(origin) {
-  if (!origin) return ALLOW === "*" ? "*" : null;
+  const reqNorm = normalizeOriginForCompare(origin);
+  if (!reqNorm) return ALLOW === "*" ? "*" : null;
   if (ALLOW === "*") return "*";
-  const list = ALLOW.split(",").map((s) => s.trim()).filter(Boolean);
-  return list.includes(origin) ? origin : null;
+  const list = ALLOW.split(",").map((s) => normalizeOriginForCompare(s.trim())).filter(Boolean);
+  if (list.includes(reqNorm)) return typeof origin === "string" ? origin.trim() : reqNorm;
+  return null;
 }
 
 /**
@@ -162,6 +178,9 @@ function allowOrigin(origin) {
 function applyCors(req, res) {
   const origin = typeof req.headers.origin === "string" ? req.headers.origin : undefined;
   const allowed = allowOrigin(origin);
+  if (!allowed && origin && ALLOW !== "*") {
+    console.warn(`[gemini-proxy] CORS: Origin が許可リストにありません: ${origin} （CORS_ALLOW_ORIGIN を確認）`);
+  }
   if (allowed) {
     res.setHeader("Access-Control-Allow-Origin", allowed);
     if (allowed !== "*") {
