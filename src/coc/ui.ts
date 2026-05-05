@@ -16,11 +16,16 @@ import { scrollPercentFromDocument } from "../lib/scroll";
 
 const SCENE_ADVANCE_MARKER = "<<<SCENE_NEXT>>>";
 
+/** 準備が早く終わってもロード画面を最低この時間は表示する（秒体感の下限） */
+const BOOT_MIN_VISIBLE_MS = 2200;
+const BOOT_MIN_VISIBLE_REDUCED_MS = 900;
+
 /** フォント・レイアウト確定までフルスクリーンローダーを表示し、FOUC を隠す */
 async function runBootDismissal(): Promise<void> {
   const el = document.getElementById("app-boot-screen");
   if (!el) return;
   const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const bootStart = performance.now();
   try {
     await document.fonts.ready;
   } catch {
@@ -28,8 +33,9 @@ async function runBootDismissal(): Promise<void> {
   }
   await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
   await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
-  const holdMs = reduced ? 120 : 560;
-  await new Promise<void>((resolve) => setTimeout(resolve, holdMs));
+  const minMs = reduced ? BOOT_MIN_VISIBLE_REDUCED_MS : BOOT_MIN_VISIBLE_MS;
+  const elapsed = performance.now() - bootStart;
+  await new Promise<void>((resolve) => setTimeout(resolve, Math.max(0, minMs - elapsed)));
 
   const critical = document.getElementById("boot-critical-styles");
   el.classList.add("app-boot--hide");
