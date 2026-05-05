@@ -169,7 +169,7 @@ function applyCors(req, res) {
       res.setHeader("Vary", "Origin");
     }
   }
-  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
+  res.setHeader("Access-Control-Allow-Methods", "GET, HEAD, POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 }
 
@@ -306,6 +306,14 @@ const server = http.createServer((req, res) => {
     void (async () => {
       try {
         applyCors(req, res);
+
+        /** Render 等の HTTP ヘルスチェック用（ボディなしの HEAD も許可） */
+        const pathOnly = (req.url ?? "").split("?")[0] ?? "";
+        if ((req.method === "GET" || req.method === "HEAD") && pathOnly === "/health") {
+          res.writeHead(200, { "Content-Type": "application/json; charset=utf-8" });
+          res.end(req.method === "HEAD" ? undefined : JSON.stringify({ ok: true, service: "gemini-proxy" }));
+          return;
+        }
 
         if (req.method !== "POST" || req.url !== "/api/llm/chat") {
           res.writeHead(req.method === "POST" || req.method === "GET" ? 404 : 405);
@@ -499,5 +507,7 @@ const server = http.createServer((req, res) => {
 });
 
 server.listen(PORT, () => {
-  console.error(`[gemini-proxy] http://127.0.0.1:${PORT}/api/llm/chat → Gemini generateContent`);
+  console.error(
+    `[gemini-proxy] http://127.0.0.1:${PORT}/api/llm/chat → Gemini generateContent · GET /health`,
+  );
 });

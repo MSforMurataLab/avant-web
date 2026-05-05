@@ -12,6 +12,6 @@ ENV NODE_ENV=production
 EXPOSE 8787
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-  CMD node -e "const p=process.env.PORT||8787;require('http').get({host:'127.0.0.1',port:p,path:'/',timeout:4000},r=>process.exit(r.statusCode===404?0:1)).on('error',()=>process.exit(1))"
+  CMD node -e "const p=process.env.PORT||8787;require('http').get({host:'127.0.0.1',port:p,path:'/health',timeout:4000},r=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))"
 
 CMD ["node", "server/proxy.mjs"]

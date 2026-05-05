@@ -1,11 +1,17 @@
-# Render Blueprint 例。Dashboard から Docker でデプロイしても同様です。
-# GEMINI_API_KEY は Dashboard でシークレット登録してください。
+# Render Blueprint: Dashboard → New → Blueprint → このリポジトリを指定。
+# 初回適用後、Environment で GEMINI_API_KEY を「Secret」として追加し、
+# CORS_ALLOW_ORIGIN を GitHub Pages のオリジン（例: https://your-org.github.io）に直してください。
+#
+# GitHub Actions のシークレット VITE_LLM_API_BASE には次を設定（末尾スラッシュなし）:
+#   https://<このサービスの onrender.com ホスト>/api/llm
+
 services:
   - type: web
     name: avant-web-gemini-proxy
     runtime: docker
     dockerfilePath: ./Dockerfile
     plan: free
+    healthCheckPath: /health
     envVars:
       - key: NODE_ENV
         value: production

@@ -37,7 +37,25 @@ docker run --rm -p 8787:8787 \
 
 **Fly.io:** `fly.toml` の `app` を未使用名に変えてから **`fly launch`** / **`fly secrets set GEMINI_API_KEY=…`** / **`fly deploy`**。コメント参照。
 
-**Render:** **`render.yaml`** を Blueprint にするか、Web Service で **Docker** と **`Dockerfile`** を指定します。
+### Render でプロキシ alone を動かす
+
+HTTPS は Render が終端し、アプリはコンテナ内で **`PORT`**（自動設定）を listen します。ヘルスチェックは **`GET /health`**（200 JSON）。
+
+**方法 A — Blueprint（`render.yaml`）**
+
+1. [Render Dashboard](https://dashboard.render.com/) → **New** → **Blueprint**。
+2. この GitHub リポジトリを接続し、ルートの **`render.yaml`** を読み込ませる。
+3. 作成された Web サービスの **Environment** で **`GEMINI_API_KEY`** を **Secret** として追加（Blueprint の `sync: false` はプレースホルダのため）。
+4. **`CORS_ALLOW_ORIGIN`** を **`https://＜GitHub のユーザーまたは組織名＞.github.io`** に変更（カスタムドメインの Pages ならその `https://…`）。複数ならカンマ区切り。
+5. デプロイ完了後、画面上部の URL（例 **`https://avant-web-gemini-proxy.onrender.com`**）を確認する。
+6. GitHub の **Actions シークレット `VITE_LLM_API_BASE`** に  
+   **`https://＜手順5のホスト名＞/api/llm`**（末尾スラッシュなし）を設定し、`main` で Pages を再ビルドする。
+
+**方法 B — 手動で Web Service**
+
+**New** → **Web Service** → リポジトリ選択 → **Docker**、**Dockerfile Path** は `./Dockerfile`。**Health Check Path** に **`/health`**。環境変数は上と同様に **`GEMINI_API_KEY`**（Secret）・**`CORS_ALLOW_ORIGIN`**。
+
+**注意:** Free プランは無アクセス時にスピンダウンし、初回リクエストが遅くなることがあります。シナリオ枠クッキーを別オリジンで確実に使う場合は `.env.example` の **`COOKIE_SAMESITE_NONE`** / **`COOKIE_SECURE`** を Render の Environment にも設定してください。
 
 ### ローカル開発
 
