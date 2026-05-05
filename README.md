@@ -19,6 +19,26 @@ API キーは **`server/proxy.mjs`** が環境変数 **`GEMINI_API_KEY`**（ま�
 
 **公開プロキシは第三者に無制限に課金されるリスク**があります。本番ではレート制限・認証・許可オリジンのみ（`CORS_ALLOW_ORIGIN`）などを検討してください。`.env.example` を参照してください。
 
+### Docker でプロキシのみをホストする（HTTPS はホスト側）
+
+ルートの **`Dockerfile`** は **`server/proxy.mjs`** と実行に必要な **`npm` 依存だけ**を入れたイメージです。コンテナ内は **HTTP のみ**で待ち受け（既定ポート **`8787`**。PaaS が注入する **`PORT`** があればそちらを使用）。**ブラウザ向けの HTTPS** は Railway・Fly.io・Render などがエッジで終端します。
+
+ローカル確認:
+
+```bash
+docker build -t avant-gemini-proxy .
+docker run --rm -p 8787:8787 \
+  -e GEMINI_API_KEY=your_key \
+  -e CORS_ALLOW_ORIGIN=http://localhost:5173 \
+  avant-gemini-proxy
+```
+
+**Railway:** リポジトリを接続すると通常 **Dockerfile を自動検出**してビルドします。**Variables** に `GEMINI_API_KEY` と `CORS_ALLOW_ORIGIN`（GitHub Pages なら `https://<org>.github.io`）を設定し、公開された **`https://….up.railway.app/api/llm`** を Actions の **`VITE_LLM_API_BASE`** に渡してください。
+
+**Fly.io:** `fly.toml` の `app` を未使用名に変えてから **`fly launch`** / **`fly secrets set GEMINI_API_KEY=…`** / **`fly deploy`**。コメント参照。
+
+**Render:** **`render.yaml`** を Blueprint にするか、Web Service で **Docker** と **`Dockerfile`** を指定します。
+
 ### ローカル開発
 
 プロジェクト直下に **`.env`** を置くと（`.env.example` をコピーして `GEMINI_API_KEY` を記入）、`npm run server` 実行時に **自動で読み込まれます**。手動で環境変数を export してもかまいません。

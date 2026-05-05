@@ -1,0 +1,15 @@
+# Render Blueprint 例。Dashboard から Docker でデプロイしても同様です。
+# GEMINI_API_KEY は Dashboard でシークレット登録してください。
+services:
+  - type: web
+    name: avant-web-gemini-proxy
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: free
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: CORS_ALLOW_ORIGIN
+        value: https://YOUR_ORG.github.io

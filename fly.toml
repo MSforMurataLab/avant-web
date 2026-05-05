@@ -1,0 +1,16 @@
+# fly launch で初回作成後、app 名・region を環境に合わせて調整してください。
+# HTTPS は Fly のエッジが終端し、アプリは HTTP で internal_port を listen します。
+#
+#   fly secrets set GEMINI_API_KEY=...
+#   fly secrets set CORS_ALLOW_ORIGIN=https://your-org.github.io
+
+app = "avant-web-gemini-proxy"
+primary_region = "nrt"
+
+[build]
+
+[http_service]
+  internal_port = 8787
+  force_https = true
+  auto_stop_machines = "stop"
+  auto_start_machines = true
