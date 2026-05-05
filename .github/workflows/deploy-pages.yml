@@ -36,9 +36,21 @@ jobs:
       - name: Test
         run: npm run test -- --run
 
+      # Secrets のみだと「Variables」タブに置いた場合ビルドに入らないため両方参照する。
+      # github-pages 環境に Environment secrets/variables がある場合も vars に載る。
+      - name: Verify VITE_LLM_API_BASE
+        env:
+          VITE_LLM_API_BASE: ${{ secrets.VITE_LLM_API_BASE || vars.VITE_LLM_API_BASE }}
+        run: |
+          if [ -z "${VITE_LLM_API_BASE:-}" ]; then
+            echo "::error::VITE_LLM_API_BASE が空です。Settings → Secrets and variables → Actions で「Secrets」または「Variables」にキー名 VITE_LLM_API_BASE を追加し（値は https://xxx.onrender.com/api/llm のように末尾スラッシュなし）、このワークフローを再実行してください。"
+            exit 1
+          fi
+          echo "VITE_LLM_API_BASE は設定済みです（値はログに出しません）。長さ: ${#VITE_LLM_API_BASE}"
+
       - name: Build
         env:
-          VITE_LLM_API_BASE: ${{ secrets.VITE_LLM_API_BASE }}
+          VITE_LLM_API_BASE: ${{ secrets.VITE_LLM_API_BASE || vars.VITE_LLM_API_BASE }}
         run: npm run build
 
       - name: Configure Pages

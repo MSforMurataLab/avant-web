@@ -15,7 +15,7 @@ API キーは **`server/proxy.mjs`** が環境変数 **`GEMINI_API_KEY`**（ま�
 
 **シナリオ生成のレート制限:** リクエスト本文に `_quota_bucket: "scenario"` が付いた呼び出し（本アプリのシナリオ JSON 生成のみ）は、**匿名クッキー `coc_quota_sid` ごとに日本時間で 1 日あたり 3 回まで**です（環境変数 **`SCENARIO_QUOTA_PER_DAY`** で変更可）。上限はシナリオ生成のみで、セッション中の GM チャットにはかかりません。フロントは **`credentials: include`** でクッキーを送るため、`CORS_ALLOW_ORIGIN` が `*` 以外の明示リストのとき **`Access-Control-Allow-Credentials`** が有効になります。別オリジンでクッキーを確実に渡す場合は **`COOKIE_SAMESITE_NONE=1`** と **`COOKIE_SECURE=1`**（HTTPS 必須）を検討してください。
 
-**GitHub Pages は静的ホストのためプロキシは動きません。** Pages でサイトを公開する場合は、Railway・Fly.io・自宅 VPS・Cloudflare Workers など別途プロキシをホストし、ビルド時に **`VITE_LLM_API_BASE`** にそのベース URL（例: `https://api.example.com/api/llm`、末尾スラッシュなし）を埋め込んでください。リポジトリの **Settings → Secrets and variables → Actions** に `VITE_LLM_API_BASE` を登録すると、デプロイワークフローがビルドに渡します。
+**GitHub Pages は静的ホストのためプロキシは動きません。** Pages でサイトを公開する場合は、Railway・Fly.io・Render など別途プロキシをホストし、ビルド時に **`VITE_LLM_API_BASE`** にそのベース URL（例: `https://xxx.onrender.com/api/llm`、末尾スラッシュなし）を埋め込んでください。リポジトリの **Settings → Secrets and variables → Actions** の **Secrets** または **Variables** タブに、名前 **`VITE_LLM_API_BASE`** で登録すると、`Deploy to GitHub Pages` がビルドに渡します。
 
 **公開プロキシは第三者に無制限に課金されるリスク**があります。本番ではレート制限・認証・許可オリジンのみ（`CORS_ALLOW_ORIGIN`）などを検討してください。`.env.example` を参照してください。
 
@@ -48,8 +48,7 @@ HTTPS は Render が終端し、アプリはコンテナ内で **`PORT`**（自�
 3. 作成された Web サービスの **Environment** で **`GEMINI_API_KEY`** を **Secret** として追加（Blueprint の `sync: false` はプレースホルダのため）。
 4. **`CORS_ALLOW_ORIGIN`** を **`https://＜GitHub のユーザーまたは組織名＞.github.io`** に変更（カスタムドメインの Pages ならその `https://…`）。複数ならカンマ区切り。
 5. デプロイ完了後、画面上部の URL（例 **`https://avant-web-gemini-proxy.onrender.com`**）を確認する。
-6. GitHub の **Actions シークレット `VITE_LLM_API_BASE`** に  
-   **`https://＜手順5のホスト名＞/api/llm`**（末尾スラッシュなし）を設定し、`main` で Pages を再ビルドする。
+6. GitHub の **Settings → Secrets and variables → Actions** で **`VITE_LLM_API_BASE`** を **Secrets** または **Variables** に追加し、値は **`https://＜手順5のホスト名＞/api/llm`**（末尾スラッシュなし）。その後 **Actions → Deploy to GitHub Pages → Run workflow** で再実行するか、`main` に push して再ビルドする。
 
 **方法 B — 手動で Web Service**
 
@@ -104,7 +103,7 @@ npm run test -- --run
 
 1. **Railway / Fly.io / Render / 自宅 VPS** などで `server/proxy.mjs` を HTTPS で公開し、`GEMINI_API_KEY` をサーバー側にだけ設定する。
 2. そのプロキシの **`…/api/llm` までのベース URL** を決める（例: `https://my-proxy.up.railway.app/api/llm`。末尾スラッシュなし）。
-3. GitHub の **Settings → Secrets and variables → Actions** に **`VITE_LLM_API_BASE`** を作成し、上記ベース URL を値として保存する。
+3. GitHub の **Settings → Secrets and variables → Actions** の **Secrets** または **Variables** に **`VITE_LLM_API_BASE`** を作成し、上記ベース URL を値として保存する（以前は Secrets のみ参照だったため、Variables だけに置くとビルドに入らずエラーになることがありました）。
 4. **`main` に push** して Actions のビルドが走り直すと、`import.meta.env` に埋め込まれ、フロントは **プロキシのホスト**へ POST するようになる。
 
 カスタムドメインで Pages を見せている場合も中身は静的ホストのままなので、同様に **`VITE_LLM_API_BASE` がビルドに入っているか**を確認してください。シークレットを追加したあと **再ビルド・再デプロイが必要**です（既存の `dist` だけでは反映されません）。

@@ -15,7 +15,7 @@ function resolveLlmChatUrl(): string {
     const host = typeof window !== "undefined" ? window.location.hostname : "";
     if (host.endsWith(".github.io")) {
       throw new Error(
-        "GitHub Pages では LLM プロキシを動かせません。別サーバーで proxy（server/proxy.mjs）を起動し、GitHub の Actions シークレット VITE_LLM_API_BASE にそのベース URL（例: https://api.example.com/api/llm、末尾スラッシュなし）を設定してから再デプロイしてください。README の「公開時に API 405」を参照。"
+        "このビルドにはプロキシ URL が埋め込まれていません。Render 等で proxy を起動したうえで、GitHub の Actions「Secrets」または「Variables」にキー名 VITE_LLM_API_BASE（例: https://xxx.onrender.com/api/llm、末尾スラッシュなし）を設定し、Deploy to GitHub Pages を再実行してからスーパーリロードしてください。"
       );
     }
   }
