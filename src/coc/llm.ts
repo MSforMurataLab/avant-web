@@ -17,10 +17,13 @@ async function postChatCompletion(body: {
   temperature: number;
   messages: ChatMessage[];
   response_format?: { type: string };
+  /** サーバーがシナリオ生成回数を数えるときのみ付与（上流には転送しない） */
+  _quota_bucket?: "scenario";
 }): Promise<string> {
   const res = await fetch(resolveLlmChatUrl(), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
+    credentials: "include",
     body: JSON.stringify(body),
   });
 
@@ -50,6 +53,7 @@ export async function chatCompletionJson(
       { role: "user", content: user },
     ],
     response_format: { type: "json_object" },
+    _quota_bucket: "scenario",
   });
 }
 
