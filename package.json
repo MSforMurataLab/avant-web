@@ -1,0 +1,26 @@
+{
+  "name": "avant-web",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview --base /avant-web/",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "test": "vitest"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.25.1",
+    "@types/node": "^22.15.3",
+    "eslint": "^9.25.1",
+    "globals": "^16.0.0",
+    "prettier": "^3.5.3",
+    "typescript": "^5.8.3",
+    "typescript-eslint": "^8.31.0",
+    "vite": "^6.3.4",
+    "vite-plugin-pwa": "^0.21.2",
+    "vitest": "^3.1.2"
+  }
+}

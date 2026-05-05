@@ -1,8 +1,22 @@
 # avant-web
 
-株式会社 AVANT のコーポレートサイト様の静的シングルページ（WebGL 背景・環境表示・ページ内検索・オフライン対応）。
+株式会社 AVANT のコーポレートサイト様のシングルページ。**Vite 6 + TypeScript** でビルドし、**GLSL（`.glsl`）をソースとして分離**、**vite-plugin-pwa（Workbox）** でオフラインキャッシュ、**Vitest / ESLint / Prettier** を開発ツールとして利用しています。
 
-## 公開 URL（GitHub Pages）
+### ローカル開発
+
+```bash
+npm ci
+npm run dev
+```
+
+本番相当ビルド（GitHub Actions と同様）:
+
+```bash
+npm run build   # 出力は dist/
+npm run preview -- --host   # dist をベースパス /avant-web/ で確認
+```
+
+### 公開 URL（GitHub Pages）
 
 リポジトリ設定で Pages のソースを **GitHub Actions** にしたうえで、ワークフロー成功後に次の URL で公開されます。
 

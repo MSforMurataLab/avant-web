@@ -2,11 +2,18 @@
  * Fullscreen WebGL: raymarched field + animated point layer — WebGL2 / WebGL1.
  * WebGL ではシーンを FBO に描画し、ACES / ブルーム / 色差 / スキャンをポストで合成する。
  */
-(function () {
-  "use strict";
+import sceneFragCore from "./shaders/scene.frag.glsl?raw";
+import postFragCore from "./shaders/post.frag.glsl?raw";
 
-  const canvas = document.getElementById("field");
-  if (!canvas) return;
+type GL = WebGLRenderingContext | WebGL2RenderingContext;
+
+const FRAG_CORE = sceneFragCore;
+const POST_FRAG_CORE = postFragCore;
+
+export function mountGlField(): void {
+  const el = document.getElementById("field");
+  if (!(el instanceof HTMLCanvasElement)) return;
+  const canvas = el;
 
   const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
   const POINT_COUNT = 320;
@@ -21,218 +28,6 @@ void main() {
 in vec2 a_position;
 void main() {
   gl_Position = vec4(a_position, 0.0, 1.0);
-}`;
-
-  const FRAG_CORE = `
-uniform vec3 u_resolution;
-uniform float u_time;
-uniform float u_scroll;
-uniform float u_animate;
-uniform float u_inline_finish;
-
-#define STEPS 36
-#define MAX_Z 28.0
-
-float hash(vec3 p) {
-  return fract(sin(dot(p, vec3(127.1, 311.7, 74.7))) * 43758.5453123);
-}
-
-float noise(vec3 p) {
-  vec3 i = floor(p);
-  vec3 f = fract(p);
-  f = f * f * (3.0 - 2.0 * f);
-  return mix(
-    mix(mix(hash(i + vec3(0.0, 0.0, 0.0)), hash(i + vec3(1.0, 0.0, 0.0)), f.x),
-        mix(hash(i + vec3(0.0, 1.0, 0.0)), hash(i + vec3(1.0, 1.0, 0.0)), f.x),
-        f.y),
-    mix(mix(hash(i + vec3(0.0, 0.0, 1.0)), hash(i + vec3(1.0, 0.0, 1.0)), f.x),
-        mix(hash(i + vec3(0.0, 1.0, 1.0)), hash(i + vec3(1.0, 1.0, 1.0)), f.x),
-        f.y),
-    f.z);
-}
-
-float fbm(vec3 p) {
-  float v = 0.0;
-  float a = 0.5;
-  for (int i = 0; i < 4; i++) {
-    v += a * noise(p);
-    p = p * 2.02 + vec3(17.1);
-    a *= 0.5;
-  }
-  return v;
-}
-
-mat2 rot(float a) {
-  float c = cos(a);
-  float s = sin(a);
-  return mat2(c, -s, s, c);
-}
-
-float sdSphere(vec3 p, float r) {
-  return length(p) - r;
-}
-
-float sdTorus(vec3 p, vec2 t) {
-  vec2 q = vec2(length(p.xz) - t.x, p.y);
-  return length(q) - t.y;
-}
-
-float smin(float a, float b, float k) {
-  float h = clamp(0.5 + 0.5 * (b - a) / k, 0.0, 1.0);
-  return mix(b, a, h) - k * h * (1.0 - h);
-}
-
-float scene(vec3 p) {
-  float amp = mix(0.07, 1.0, u_animate);
-  float ph = u_scroll * 6.28318;
-  float flow = u_time * 0.082 * mix(0.22, 1.0, amp);
-
-  vec3 q = p;
-  q.xy *= rot(ph * 0.22 + u_scroll * 0.55 + flow);
-  q.yz *= rot(ph * 0.15 + u_scroll * 0.38 + flow * 0.78);
-
-  float disp = (fbm(q * 0.11 + ph * 0.05 + flow * 0.15) - 0.5) * 1.1;
-  float core = sdSphere(q, 1.55 + disp * 0.35);
-
-  vec3 rq = q;
-  rq.xz *= rot(rq.y * 0.35 + ph * 0.2 + flow * 0.55);
-  float shell = sdTorus(rq * vec3(1.0, 0.85, 1.0), vec2(2.35, 0.09));
-  shell += (fbm(rq * 0.4 + ph * 0.03 + flow * 0.1) - 0.5) * 0.06;
-
-  vec3 fq = abs(fract(q * 0.18 + vec3(ph * 0.04 + flow * 0.06)) - 0.5) / 0.18;
-  float shards = sdSphere(fq - vec3(1.8, 0.6 * sin(ph + q.z + flow), 1.2), 0.22);
-  shards = min(shards, sdSphere(fq - vec3(-1.6, -0.4 * cos(ph * 0.8 + flow * 0.9), -1.4), 0.18));
-
-  float d = smin(core, shell, 0.65);
-  d = smin(d, shards, 0.35);
-
-  return d;
-}
-
-vec3 normal(vec3 p) {
-  vec2 e = vec2(0.00085, 0.0);
-  return normalize(vec3(
-    scene(p + e.xyy) - scene(p - e.xyy),
-    scene(p + e.yxy) - scene(p - e.yxy),
-    scene(p + e.yyx) - scene(p - e.yyx)
-  ));
-}
-
-void main() {
-  vec2 fc = gl_FragCoord.xy;
-  vec2 uv = (fc * 2.0 - u_resolution.xy) / u_resolution.y;
-
-  float amp = mix(0.12, 1.0, u_animate);
-  float flow = u_time * 0.078 * mix(0.22, 1.0, amp);
-  vec3 ro = vec3(
-    u_scroll * 0.14 + sin(flow * 1.05) * 0.028,
-    (u_scroll - 0.48) * 0.55 + sin(flow * 0.88) * 0.02,
-    -7.1 + u_scroll * 0.26
-  );
-  vec3 rd = normalize(vec3(uv, 1.15));
-
-  rd.xy *= rot(u_scroll * 0.22 + sin(flow * 0.65) * 0.045);
-  rd.yz *= rot(u_scroll * 0.1 + cos(flow * 0.52) * 0.032);
-
-  float z = 0.0;
-  float glow = 0.0;
-  vec3 col = vec3(0.008, 0.008, 0.028);
-
-  for (int i = 0; i < STEPS; i++) {
-    vec3 p = ro + rd * z;
-    float d = scene(p);
-    glow += exp(-abs(d) * 3.4) * 0.022 * mix(0.45, 1.0, amp);
-
-    if (d < 0.0012) {
-      vec3 n = normal(p);
-      vec3 lp = normalize(vec3(1.3, 1.8, -2.5));
-      vec3 vd = -rd;
-      float diff = max(dot(n, lp), 0.0);
-      float rim = pow(max(0.0, 1.0 - dot(n, vd)), 2.8);
-      vec3 h = normalize(lp + vd);
-      float spec = pow(max(dot(n, h), 0.0), 52.0);
-      float sheen = pow(max(0.0, 1.0 - dot(n, h)), 3.2);
-
-      vec3 base = mix(vec3(0.05, 0.06, 0.12), vec3(0.0, 0.92, 0.72), diff * 0.85);
-      base += vec3(1.0, 0.12, 0.38) * rim * 0.95;
-      base += vec3(0.25, 0.65, 1.0) * pow(diff, 3.0) * 0.35;
-      base += vec3(1.0, 0.96, 0.88) * spec * 0.48;
-      base += vec3(0.4, 0.1, 0.28) * sheen * 0.32;
-      base += vec3(0.85, 0.12, 0.32) * (1.0 - diff) * 0.14;
-
-      float fog = 1.0 - exp(-z * 0.055);
-      col = mix(base, col, fog * 0.25);
-      col += vec3(0.0, 0.85, 0.65) * glow * 0.6;
-      break;
-    }
-
-    if (z > MAX_Z) {
-      col += vec3(0.65, 0.05, 0.35) * glow * 0.45;
-      col += vec3(0.0, 0.55, 0.9) * glow * 0.35;
-      break;
-    }
-
-    z += d * 0.85;
-  }
-
-  if (u_inline_finish > 0.5) {
-    float vign = smoothstep(1.35, 0.25, length(uv * vec2(0.9, 1.0)));
-    col *= vign;
-    float scan = sin(fc.y * 0.45 + u_scroll * 18.0 + u_time * 2.95 * mix(0.25, 1.0, amp)) * 0.012 + 1.0;
-    col *= scan;
-  }
-
-  FRAG_OUT(col);
-}`;
-
-  const POST_FRAG_CORE = `
-uniform sampler2D u_scene;
-uniform vec3 u_resolution;
-uniform float u_time;
-uniform float u_scroll;
-uniform float u_animate;
-
-float phash(vec2 p) {
-  return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453123);
-}
-
-void main() {
-  vec2 fc = gl_FragCoord.xy;
-  vec2 uv = (fc * 2.0 - u_resolution.xy) / u_resolution.y;
-  vec2 st = fc / u_resolution.xy;
-  vec2 px = vec2(1.0) / max(u_resolution.xy, vec2(1.0));
-  float amp = mix(0.12, 1.0, u_animate);
-  float dist = length(uv);
-  vec2 dir = dist > 1e-5 ? uv / dist : vec2(0.0);
-  float ab = dist * dist * 0.00135 * mix(0.82, 1.08, amp);
-
-  vec3 c;
-  c.r = TEX_SAMPLE(u_scene, st + dir * px * ab * 5.5).r;
-  c.g = TEX_SAMPLE(u_scene, st).g;
-  c.b = TEX_SAMPLE(u_scene, st - dir * px * ab * 5.5).b;
-
-  vec3 blur =
-    TEX_SAMPLE(u_scene, st + px * vec2(1.35, 0.62)).rgb +
-    TEX_SAMPLE(u_scene, st - px * vec2(1.18, 0.72)).rgb +
-    TEX_SAMPLE(u_scene, st + px * vec2(-0.82, 1.12)).rgb +
-    TEX_SAMPLE(u_scene, st - px * vec2(0.92, -1.02)).rgb;
-  blur *= 0.25;
-
-  float lum = dot(c, vec3(0.299, 0.587, 0.114));
-  float bloomAmt = max(lum - 0.5, 0.0) * (2.15 + amp * 0.95);
-  vec3 bloomed = c + blur * bloomAmt * vec3(0.96, 0.84, 1.02);
-
-  vec3 x = max(bloomed, vec3(0.0));
-  x = (x * (2.51 * x + 0.03)) / (x * (2.43 * x + 0.59) + 0.14);
-  x = clamp(x, 0.0, 1.0);
-
-  float vign = smoothstep(1.4, 0.2, length(uv * vec2(0.9, 1.0)));
-  x *= vign;
-  float scan = sin(fc.y * 0.45 + u_scroll * 18.0 + u_time * 2.95 * mix(0.25, 1.0, amp)) * 0.011 + 1.0;
-  x *= scan;
-  x += (phash(fc + u_time * 37.0) - 0.5) * 0.016 * mix(0.35, 1.0, amp);
-
-  FRAG_POST_OUT(x);
 }`;
 
   const POST_TEX_REPLACE = /TEX_SAMPLE\(([^,]+),\s*([^)]+)\)/g;
@@ -349,7 +144,7 @@ void main() {
   o_fragColor = vec4(v_rgb, a);
 }`;
 
-  function applyGlStaticState(g) {
+  function applyGlStaticState(g: GL): void {
     g.disable(g.DEPTH_TEST);
     g.disable(g.STENCIL_TEST);
     g.disable(g.DITHER);
@@ -357,8 +152,9 @@ void main() {
     g.pixelStorei(g.UNPACK_ALIGNMENT, 1);
   }
 
-  function compile(gl, type, src) {
+  function compile(gl: GL, type: number, src: string): WebGLShader | null {
     const sh = gl.createShader(type);
+    if (!sh) return null;
     gl.shaderSource(sh, src);
     gl.compileShader(sh);
     if (!gl.getShaderParameter(sh, gl.COMPILE_STATUS)) {
@@ -369,7 +165,7 @@ void main() {
     return sh;
   }
 
-  function link(gl, vs, fs) {
+  function link(gl: GL, vs: WebGLShader, fs: WebGLShader): WebGLProgram | null {
     const prog = gl.createProgram();
     gl.attachShader(prog, vs);
     gl.attachShader(prog, fs);
@@ -393,32 +189,32 @@ void main() {
     failIfMajorPerformanceCaveat: false,
   };
 
-  let gl = null;
-  let program = null;
-  let programPts = null;
-  let programPost = null;
-  let buf = null;
-  let bufPts = null;
-  let fboScene = null;
-  let texScene = null;
+  let gl: GL | null = null;
+  let program: WebGLProgram | null = null;
+  let programPts: WebGLProgram | null = null;
+  let programPost: WebGLProgram | null = null;
+  let buf: WebGLBuffer | null = null;
+  let bufPts: WebGLBuffer | null = null;
+  let fboScene: WebGLFramebuffer | null = null;
+  let texScene: WebGLTexture | null = null;
   let postReady = false;
   let locPos = -1;
-  let locRes = null;
-  let locTime = null;
-  let locScroll = null;
-  let locAnimate = null;
-  let locInline = null;
+  let locRes: WebGLUniformLocation | null = null;
+  let locTime: WebGLUniformLocation | null = null;
+  let locScroll: WebGLUniformLocation | null = null;
+  let locAnimate: WebGLUniformLocation | null = null;
+  let locInline: WebGLUniformLocation | null = null;
   let locSeed = -1;
-  let locPTime = null;
-  let locPRes = null;
-  let locPAnimate = null;
-  let locPScroll = null;
+  let locPTime: WebGLUniformLocation | null = null;
+  let locPRes: WebGLUniformLocation | null = null;
+  let locPAnimate: WebGLUniformLocation | null = null;
+  let locPScroll: WebGLUniformLocation | null = null;
   let locPostPos = -1;
-  let locPostScene = null;
-  let locPostRes = null;
-  let locPostTime = null;
-  let locPostScroll = null;
-  let locPostAnimate = null;
+  let locPostScene: WebGLUniformLocation | null = null;
+  let locPostRes: WebGLUniformLocation | null = null;
+  let locPostTime: WebGLUniformLocation | null = null;
+  let locPostScroll: WebGLUniformLocation | null = null;
+  let locPostAnimate: WebGLUniformLocation | null = null;
 
   function destroySceneFbo() {
     postReady = false;
@@ -474,10 +270,10 @@ void main() {
   function initPipeline() {
     destroyPipeline();
 
-    gl = canvas.getContext("webgl2", glOpt);
+    gl = canvas.getContext("webgl2", glOpt) as GL | null;
     let useGl2 = !!gl;
     if (!gl) {
-      gl = canvas.getContext("webgl", glOpt);
+      gl = canvas.getContext("webgl", glOpt) as GL | null;
       useGl2 = false;
     }
     if (!gl) return false;
@@ -588,6 +384,7 @@ void main() {
   }
 
   function resize() {
+    if (!gl) return;
     const dpr = Math.min(window.devicePixelRatio || 1, 1.22);
     width = Math.floor(window.innerWidth * dpr * renderScale);
     height = Math.floor(window.innerHeight * dpr * renderScale);
@@ -632,14 +429,16 @@ void main() {
   window.addEventListener("scroll", onScroll, { passive: true });
 
   let timeOrigin = performance.now();
-  let animationId = null;
+  let animationId: number | null = null;
   let lastNow = performance.now();
   let perfSmooth = 14;
   let perfTicks = 0;
   let layoutPoll = 0;
   let perfUiAcc = 0;
 
-  function drawFrame() {
+  function drawFrame(): void {
+    if (!gl || !program || !buf || locPos < 0 || !locRes || !locScroll || !locAnimate) return;
+
     const amp = animAmp();
     const t = (performance.now() - timeOrigin) * 0.001;
     const sc = scrollUniformLinear();
@@ -666,7 +465,7 @@ void main() {
     gl.drawArrays(gl.TRIANGLES, 0, 3);
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
 
-    if (postReady && programPost && locPostPos >= 0 && locPostScene) {
+    if (postReady && programPost && locPostPos >= 0 && locPostScene && texScene) {
       gl.useProgram(programPost);
       gl.bindBuffer(gl.ARRAY_BUFFER, buf);
       gl.enableVertexAttribArray(locPostPos);
@@ -683,7 +482,7 @@ void main() {
       gl.bindTexture(gl.TEXTURE_2D, null);
     }
 
-    if (programPts && locSeed >= 0) {
+    if (programPts && locSeed >= 0 && bufPts) {
       gl.enable(gl.BLEND);
       gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
       gl.useProgram(programPts);
@@ -701,7 +500,7 @@ void main() {
     }
   }
 
-  function frame(now) {
+  function frame(now: number): void {
     if (!gl || !program) return;
 
     const dtSec = Math.min(0.092, Math.max(0.001, (now - lastNow) / 1000));
@@ -738,13 +537,11 @@ void main() {
       perfUiAcc += dtSec;
       if (perfUiAcc >= 0.22) {
         perfUiAcc = 0;
-        try {
-          window.dispatchEvent(
-            new CustomEvent("voidsignal:perf", {
-              detail: { frameMs: perfSmooth, renderScale },
-            })
-          );
-        } catch (_) {}
+        window.dispatchEvent(
+          new CustomEvent("voidsignal:perf", {
+            detail: { frameMs: perfSmooth, renderScale },
+          })
+        );
       }
     }
 
@@ -825,4 +622,4 @@ void main() {
   }
 
   startRender();
-})();
+}
