@@ -1,3 +1,5 @@
+import "dotenv/config";
+
 /**
  * Google Gemini generateContent のプロキシ。
  * フロントは従来どおり OpenAI 風の messages を送り、サーバーが Gemini に変換する。

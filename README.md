@@ -20,11 +20,12 @@ API キーは **`server/proxy.mjs`** が環境変数 **`GEMINI_API_KEY`**（ま�
 
 ### ローカル開発
 
-ターミナル 1（プロキシ。キーはこのプロセスの環境だけに置く）:
+プロジェクト直下に **`.env`** を置くと（`.env.example` をコピーして `GEMINI_API_KEY` を記入）、`npm run server` 実行時に **自動で読み込まれます**。手動で環境変数を export してもかまいません。
+
+ターミナル 1（プロキシ）:
 
 ```bash
-export GEMINI_API_KEY=...   # Windows は set / PowerShell の環境変数でも可
-npm run server              # 既定 http://127.0.0.1:8787
+npm run server              # 既定 http://127.0.0.1:8787（.env を読込）
 ```
 
 ターミナル 2:
