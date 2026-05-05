@@ -116,6 +116,8 @@ body.gl-fallback {
   display: block;
   contain: strict;
   transform: translateZ(0);
+  /* WebGL のバッファ再作成や初回描画前でもボディと同色になり、点滅しにくい */
+  background-color: var(--bg);
 }
 
 body.gl-fallback #field {

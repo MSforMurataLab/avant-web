@@ -386,12 +386,22 @@ void main() {
   function resize() {
     if (!gl) return;
     const dpr = Math.min(window.devicePixelRatio || 1, 1.22);
-    width = Math.floor(window.innerWidth * dpr * renderScale);
-    height = Math.floor(window.innerHeight * dpr * renderScale);
+    const iw = window.innerWidth;
+    const ih = window.innerHeight;
+    const nextW = Math.floor(iw * dpr * renderScale);
+    const nextH = Math.floor(ih * dpr * renderScale);
+    const cssW = `${iw}px`;
+    const cssH = `${ih}px`;
+    /* 同一寸法なら再設定しない（canvas.width 代入や FBO 再作成が点滅の原因になりやすい） */
+    if (width === nextW && height === nextH && canvas.style.width === cssW && canvas.style.height === cssH) {
+      return;
+    }
+    width = nextW;
+    height = nextH;
     canvas.width = width;
     canvas.height = height;
-    canvas.style.width = window.innerWidth + "px";
-    canvas.style.height = window.innerHeight + "px";
+    canvas.style.width = cssW;
+    canvas.style.height = cssH;
     gl.viewport(0, 0, width, height);
     if (programPost) {
       createSceneFbo();
@@ -548,13 +558,27 @@ void main() {
     animationId = requestAnimationFrame(frame);
   }
 
-  window.addEventListener("resize", () => {
-    onScroll();
-    resize();
-    syncScrollTarget();
-    scrollTopSmooth = scrollTopTarget;
-    drawFrame();
-  });
+  /** 連続 resize を次フレーム以降に1回へまとめ、canvas/FBO の無駄なリセットを防ぐ */
+  let resizeRafOuter: number | null = null;
+  let resizeRafInner: number | null = null;
+  function scheduleResizeFromWindow(): void {
+    if (resizeRafOuter !== null) cancelAnimationFrame(resizeRafOuter);
+    resizeRafOuter = requestAnimationFrame(() => {
+      resizeRafOuter = null;
+      if (resizeRafInner !== null) cancelAnimationFrame(resizeRafInner);
+      resizeRafInner = requestAnimationFrame(() => {
+        resizeRafInner = null;
+        onScroll();
+        resize();
+        syncScrollTarget();
+        scrollTopSmooth = scrollTopTarget;
+        drawFrame();
+      });
+    });
+  }
+
+  window.addEventListener("resize", scheduleResizeFromWindow, { passive: true });
+  window.visualViewport?.addEventListener("resize", scheduleResizeFromWindow, { passive: true });
 
   document.addEventListener(
     "visibilitychange",
