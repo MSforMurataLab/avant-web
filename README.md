@@ -8,7 +8,7 @@
 
 API キーは **`server/proxy.mjs`** が環境変数 **`GEMINI_API_KEY`**（または **`GOOGLE_API_KEY`**）から読み、[Gemini API](https://ai.google.dev/) の **`generateContent`（v1beta）** を呼び出します。フロントは従来どおり **`POST …/api/llm/chat`** に OpenAI 形式の `messages` を送りますが、サーバーが Gemini 用ボディへ変換し、応答だけ OpenAI の `chat.completion` 形に揃えて返すため **フロントの改修は不要**です。
 
-- **既定モデル**: 環境変数 **`GEMINI_MODEL`**（未設定時は `gemini-2.0-flash`）。画面の「モデル ID」で上書き可能（`gpt-…` のような OpenAI 名だけ送られた場合はサーバー既定にフォールバック）。
+- **既定モデル**: 環境変数 **`GEMINI_MODEL`**（未設定時は `gemini-2.5-flash`）。画面の「モデル ID」で上書き可能（`gpt-…` のような OpenAI 名だけ送られた場合はサーバー既定にフォールバック）。
 - **エンドポイント**: 通常は `https://generativelanguage.googleapis.com/v1beta`。変更する場合のみ **`GEMINI_API_ROOT`** を設定。
 - API キーは [Google AI Studio](https://aistudio.google.com/app/apikey) などで発行します。
 

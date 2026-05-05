@@ -14,7 +14,7 @@ const PORT = Number(process.env.PORT || 8787);
 const API_KEY = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || "";
 const GEMINI_API_ROOT =
   (process.env.GEMINI_API_ROOT || "https://generativelanguage.googleapis.com/v1beta").replace(/\/$/, "");
-const DEFAULT_MODEL = process.env.GEMINI_MODEL || "gemini-2.0-flash";
+const DEFAULT_MODEL = process.env.GEMINI_MODEL || "gemini-2.5-flash";
 const ALLOW = process.env.CORS_ALLOW_ORIGIN || "*";
 const SCENARIO_DAILY_LIMIT = Number(process.env.SCENARIO_QUOTA_PER_DAY || 3);
 
