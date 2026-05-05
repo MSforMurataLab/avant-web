@@ -22,6 +22,16 @@ API キーは **`server/proxy.mjs`** が環境変数 **`GEMINI_API_KEY`**（ま�
 
 プロジェクト直下に **`.env`** を置くと（`.env.example` をコピーして `GEMINI_API_KEY` を記入）、`npm run server` 実行時に **自動で読み込まれます**。手動で環境変数を export してもかまいません。
 
+**Windows の Git Bash で `npm: command not found` のとき:** Node をインストール済みでも、Git Bash の `PATH` に npm が入っていないことがあります。リポジトリ直下の **`server.sh`** / **`dev.sh`** を使うか、次のどちらかで対処してください。
+
+```bash
+# 一回だけ現在のシェル用（標準のインストール先）
+export PATH="/c/Program Files/nodejs:$PATH"
+npm run server
+```
+
+または `./server.sh`（プロキシ）・`bash dev.sh`（Vite。事前に `npm ci` は PowerShell や PATH が通ったターミナルで実行）。
+
 ターミナル 1（プロキシ）:
 
 ```bash
