@@ -5,10 +5,17 @@
   --fg-muted: rgba(232, 230, 239, 0.62);
   --accent: #00ffc8;
   --accent-hot: #ff2d6a;
+  --accent-dim: rgba(0, 255, 200, 0.45);
   --border: rgba(232, 230, 239, 0.12);
   --font-display: "Syne", system-ui, sans-serif;
+  --font-ui: "DM Sans", system-ui, sans-serif;
   --font-mono: "IBM Plex Mono", ui-monospace, monospace;
   --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --radius-sm: 10px;
+  --radius-md: 16px;
+  --radius-lg: 22px;
+  --shadow-float: 0 28px 56px rgba(0, 0, 0, 0.45);
+  --shadow-soft: 0 12px 32px rgba(0, 0, 0, 0.28);
 }
 
 *,
@@ -166,7 +173,13 @@ body.gl-fallback #field {
   align-items: center;
   justify-content: space-between;
   padding: 1.25rem clamp(1rem, 4vw, 3rem);
-  mix-blend-mode: difference;
+}
+
+.top.coc-top {
+  mix-blend-mode: normal;
+  backdrop-filter: blur(14px);
+  background: linear-gradient(180deg, rgba(3, 3, 8, 0.92) 0%, rgba(3, 3, 8, 0.55) 100%);
+  border-bottom: 1px solid rgba(232, 230, 239, 0.06);
 }
 
 .mark {

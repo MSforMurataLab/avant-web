@@ -99,9 +99,9 @@ export function mountCocApp(): void {
       return;
     }
     elSheet.textContent = investigatorSummaryForPrompt(inv);
-    if (elStatHp) elStatHp.textContent = `HP ${inv.hp}/${inv.hpMax}`;
-    if (elStatSan) elStatSan.textContent = `SAN ${inv.san}/${inv.sanMax}`;
-    if (elStatLuck) elStatLuck.textContent = `幸運 ${inv.luck}`;
+    if (elStatHp) elStatHp.textContent = `${inv.hp} / ${inv.hpMax}`;
+    if (elStatSan) elStatSan.textContent = `${inv.san} / ${inv.sanMax}`;
+    if (elStatLuck) elStatLuck.textContent = String(inv.luck);
     if (elSkillSelect) {
       elSkillSelect.innerHTML = "";
       const keys = Object.keys(inv.skills).sort((a, b) => a.localeCompare(b));
@@ -127,14 +127,30 @@ export function mountCocApp(): void {
   function appendChat(role: "gm" | "user", body: string): void {
     if (!elChatLog) return;
     const wrap = document.createElement("div");
-    wrap.className = "coc-msg";
+    wrap.className = `coc-msg coc-msg--${role}`;
+
+    const row = document.createElement("div");
+    row.className = "coc-msg-row";
+
+    const av = document.createElement("span");
+    av.className = role === "user" ? "coc-msg-avatar coc-msg-avatar--user" : "coc-msg-avatar";
+    av.setAttribute("aria-hidden", "true");
+    av.textContent = role === "user" ? "PL" : "GM";
+
+    const stack = document.createElement("div");
+    stack.className = "coc-msg-stack";
+
     const rr = document.createElement("div");
-    rr.className = "coc-msg-role" + (role === "user" ? " user" : "");
-    rr.textContent = role === "user" ? "あなた" : "ゲームマスター";
+    rr.className = role === "user" ? "coc-msg-role is-user" : "coc-msg-role";
+    rr.textContent = role === "user" ? "あなた（調査員）" : "ゲームマスター";
+
     const bd = document.createElement("div");
     bd.className = "coc-msg-body";
     bd.textContent = body;
-    wrap.append(rr, bd);
+
+    stack.append(rr, bd);
+    row.append(av, stack);
+    wrap.appendChild(row);
     elChatLog.appendChild(wrap);
     elChatLog.scrollTop = elChatLog.scrollHeight;
   }

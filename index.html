@@ -22,7 +22,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap"
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Syne:wght@400;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap"
       rel="stylesheet"
     />
   </head>
@@ -31,14 +31,22 @@
     <canvas id="field" aria-hidden="true"></canvas>
     <div class="grain" aria-hidden="true"></div>
 
-    <header class="top">
-      <span class="mark-pulse"><span class="pulse" aria-hidden="true"></span> SOLO CoC6</span>
-      <nav class="nav" aria-label="ページ内">
-        <a href="#coc-setup">セットアップ</a>
-        <a href="#coc-play">プレイ</a>
-        <a href="#coc-rules">ルールメモ</a>
+    <header class="top coc-top">
+      <span class="mark-pulse coc-brand"><span class="pulse" aria-hidden="true"></span> Solo CoC6</span>
+      <nav class="nav coc-nav" aria-label="ページ内">
+        <a class="coc-nav-link" href="#top">トップ</a>
+        <a class="coc-nav-link" href="#coc-setup">準備</a>
+        <a class="coc-nav-link" href="#coc-play">セッション</a>
+        <a class="coc-nav-link" href="#coc-rules">ルール</a>
       </nav>
     </header>
+
+    <div class="marquee coc-marquee" aria-hidden="true">
+      <div class="marquee-track">
+        <span>ソロ専用 · 第6版準拠 · シーン固定シナリオ · クライアント判定 · サーバープロキシ · </span>
+        <span>ソロ専用 · 第6版準拠 · シーン固定シナリオ · クライアント判定 · サーバープロキシ · </span>
+      </div>
+    </div>
 
     <div
       class="scroll-progress"
@@ -52,136 +60,220 @@
 
     <main id="main" class="coc-grid">
       <section class="coc-hero" id="top">
-        <h1>クトゥルフ神話TRPG 第6版 · ソロ専用 AI GM</h1>
-        <p class="coc-lede">
-          調査員1名のみ。技能判定は第6版の目安に従いこのページのサイコロで決定します。シナリオは
-          LLM が<strong>あらかじめ指定したシーン数だけ</strong>の JSON として生成し、それ以上に膨らませません。
-        </p>
-        <div class="coc-warn" role="note">
-          <strong>重要:</strong>
-          LLM の API キーはサーバー側だけに置き、ブラウザからはプロキシ経由で呼び出します（BYOK ではありません）。プロキシは公開するとトークン課金を第三者に使われる恐れがあるため、必ず独自ホストし CORS・監視を設定してください。生成シナリオは架空のオリジナルであり、商業シナリオやルールブックの転載ではありません。判定・SAN・戦闘の最終解釈はテーブル合意が前提です。
-        </div>
-      </section>
-
-      <section id="coc-setup" class="coc-setup">
-        <div class="coc-panel">
-          <h2>モデル（任意）</h2>
-          <p class="coc-field" style="font-size: 0.78rem; opacity: 0.85; margin: 0 0 0.5rem">
-            空のままならサーバーの既定モデル（環境変数 OPENAI_MODEL）が使われます。異なるモデルを試すときだけ入力してください。
-          </p>
-          <div class="coc-field">
-            <label for="coc-model">モデル ID</label>
-            <input id="coc-model" type="text" value="" autocomplete="off" placeholder="例: gpt-4o-mini（未入力でサーバー既定）" />
+        <div class="coc-hero__grid">
+          <div class="coc-hero__copy">
+            <p class="coc-eyebrow">Call of Cthulhu — 6th Edition · Solo Protocol</p>
+            <h1 class="coc-title">
+              <span class="coc-title__line">クトゥルフ神話TRPG</span>
+              <span class="coc-title__accent">ソロ専用 AI ゲームマスター</span>
+            </h1>
+            <p class="coc-lede">
+              調査員は常に<strong>1名</strong>。技能判定はこの UI の d100 で確定させ、結果をチャットへ貼ります。シナリオは LLM が
+              <strong>指定シーン数だけ</strong>の構造化 JSON として生成し — GM はその枠から外れません。
+            </p>
+            <ul class="coc-hero-pills" aria-label="主要機能">
+              <li class="coc-pill">第6版ベース判定</li>
+              <li class="coc-pill">短期シナリオ JSON</li>
+              <li class="coc-pill">サーバー側 LLM プロキシ</li>
+              <li class="coc-pill">日次シナリオ上限</li>
+            </ul>
           </div>
-        </div>
-
-        <div class="coc-panel">
-          <h2>シナリオ制約（生成）</h2>
-          <div class="coc-field">
-            <label for="coc-scene-count">シーン数（固定）</label>
-            <select id="coc-scene-count">
-              <option value="5" selected>5</option>
-              <option value="6">6</option>
-              <option value="7">7</option>
-            </select>
-          </div>
-          <div class="coc-field">
-            <label for="coc-era">時代ムード</label>
-            <select id="coc-era">
-              <option>現代日本（都市）</option>
-              <option>現代日本（地方）</option>
-              <option>1920年代アメリカ</option>
-              <option>ヴィクトリア朝英国</option>
-            </select>
-          </div>
-          <div class="coc-field">
-            <label for="coc-tone">トーン</label>
-            <select id="coc-tone">
-              <option>調査ミステリ（ホラー控えめ）</option>
-              <option>心理的ホラー</option>
-              <option>宇宙的不気味さ（ゴア控えめ）</option>
-            </select>
-          </div>
-          <div class="coc-field">
-            <label for="coc-theme-hint">テーマのヒント（任意・短文）</label>
-            <textarea id="coc-theme-hint" placeholder="例: 廃駅、失踪、夢 journal"></textarea>
-          </div>
-          <p class="coc-field" style="font-size: 0.72rem; opacity: 0.8; margin: 0 0 0.5rem">
-            シナリオ自動生成は<strong>同一ブラウザあたり 1 日 3 回まで</strong>（日本時間・サーバー側）。チャット進行の上限ではありません。
-          </p>
-          <div class="coc-actions">
-            <button type="button" class="coc-btn" id="coc-btn-gen-scenario">シナリオを生成（JSON）</button>
-          </div>
-          <pre id="coc-scenario-preview" class="coc-sheet" aria-live="polite"></pre>
-        </div>
-
-        <div class="coc-panel" style="grid-column: 1 / -1">
-          <h2>調査員（第6版ステータス）</h2>
-          <div class="coc-field">
-            <label for="coc-inv-name">名前（空ならランダム）</label>
-            <input id="coc-inv-name" type="text" autocomplete="name" />
-          </div>
-          <div class="coc-actions">
-            <button type="button" class="coc-btn" id="coc-btn-roll-inv">調査員をランダム生成</button>
-          </div>
-          <pre id="coc-inv-sheet" class="coc-sheet" aria-live="polite"></pre>
-          <div class="coc-actions">
-            <button type="button" class="coc-btn" id="coc-btn-start">セッション開始</button>
-          </div>
-          <p id="coc-status" class="coc-status" role="status"></p>
-        </div>
-      </section>
-
-      <section id="coc-play" class="coc-play" hidden>
-        <div class="coc-chat">
-          <div id="coc-chat-log" class="coc-chat-log" aria-live="polite"></div>
-          <div class="coc-chat-input">
-            <textarea id="coc-chat-input" rows="3" placeholder="調査員の行動・発言を入力…"></textarea>
-            <button type="button" class="coc-btn" id="coc-btn-send">送信</button>
-          </div>
-        </div>
-        <aside class="coc-side">
-          <div class="coc-panel">
-            <h2>キャラ状態</h2>
-            <p id="coc-stat-hp" class="coc-statline">HP —</p>
-            <p id="coc-stat-san" class="coc-statline">SAN —</p>
-            <p id="coc-stat-luck" class="coc-statline">幸運 —</p>
-            <p id="coc-sidebar-scene" class="coc-statline">場面 —</p>
-            <div class="coc-actions">
-              <button type="button" class="coc-btn" id="coc-btn-advance">場面進行をリクエスト</button>
-              <button type="button" class="coc-btn coc-btn--danger" id="coc-btn-reset">セッションをリセット</button>
+          <aside class="coc-hero__card" aria-label="運用上の注意">
+            <div class="coc-hero-card__head">
+              <span class="coc-dot coc-dot--warn" aria-hidden="true"></span>
+              <span class="coc-mono-label">OPERATOR NOTE</span>
             </div>
-          </div>
-          <div class="coc-panel">
-            <h2>技能判定（d100）</h2>
+            <p class="coc-hero-card__body">
+              LLM の API キーはサーバーだけに保持し、ブラウザはプロキシ経由のみです。公開プロキシは第三者利用のリスクがあります。
+              生成物は架空オリジナルであり商業シナリオの転載ではありません。ルール解釈はグループの合意が優先します。
+            </p>
+          </aside>
+        </div>
+      </section>
+
+      <section id="coc-setup" class="coc-setup-section">
+        <header class="coc-section-head">
+          <p class="coc-eyebrow coc-eyebrow--dim">Phase 01 — Preparation</p>
+          <h2 class="coc-section-title">セッション準備</h2>
+          <p class="coc-section-lede">モデル → シナリオ生成 → 調査員作成の順がおすすめです。準備が整ったらセッションを開始します。</p>
+        </header>
+
+        <div class="coc-workbench">
+          <div class="coc-panel coc-panel--glass">
+            <div class="coc-panel__head">
+              <span class="coc-step">01</span>
+              <h2 class="coc-panel__title">モデル</h2>
+            </div>
+            <p class="coc-help">
+              空欄のときはサーバー環境変数 <span class="coc-kbd">OPENAI_MODEL</span> が使われます。
+            </p>
             <div class="coc-field">
-              <label for="coc-skill-select">技能</label>
-              <select id="coc-skill-select"></select>
+              <label for="coc-model">モデル ID（任意）</label>
+              <input id="coc-model" type="text" value="" autocomplete="off" placeholder="例: gpt-4o-mini" />
+            </div>
+          </div>
+
+          <div class="coc-panel coc-panel--glass coc-panel--accent">
+            <div class="coc-panel__head">
+              <span class="coc-step">02</span>
+              <h2 class="coc-panel__title">シナリオ制約</h2>
+            </div>
+            <p class="coc-quota-note">
+              <span class="coc-quota-dot" aria-hidden="true"></span>
+              シナリオ自動生成は <strong>同一ブラウザ · 1 日 3 回まで</strong>（日本時間）。チャット進行は別カウントです。
+            </p>
+            <div class="coc-field-grid">
+              <div class="coc-field">
+                <label for="coc-scene-count">シーン数（固定）</label>
+                <select id="coc-scene-count">
+                  <option value="5" selected>5</option>
+                  <option value="6">6</option>
+                  <option value="7">7</option>
+                </select>
+              </div>
+              <div class="coc-field">
+                <label for="coc-era">時代ムード</label>
+                <select id="coc-era">
+                  <option>現代日本（都市）</option>
+                  <option>現代日本（地方）</option>
+                  <option>1920年代アメリカ</option>
+                  <option>ヴィクトリア朝英国</option>
+                </select>
+              </div>
+              <div class="coc-field coc-field--full">
+                <label for="coc-tone">トーン</label>
+                <select id="coc-tone">
+                  <option>調査ミステリ（ホラー控えめ）</option>
+                  <option>心理的ホラー</option>
+                  <option>宇宙的不気味さ（ゴア控えめ）</option>
+                </select>
+              </div>
+              <div class="coc-field coc-field--full">
+                <label for="coc-theme-hint">テーマのヒント（任意）</label>
+                <textarea id="coc-theme-hint" placeholder="例: 廃駅、失踪、夢日記"></textarea>
+              </div>
             </div>
             <div class="coc-actions">
-              <button type="button" class="coc-btn" id="coc-btn-roll-skill">技能ロール</button>
-              <button type="button" class="coc-btn" id="coc-btn-roll-d100">素の d100</button>
-              <button type="button" class="coc-btn" id="coc-btn-insert-roll">最新結果を入力欄へ</button>
+              <button type="button" class="coc-btn coc-btn--primary" id="coc-btn-gen-scenario">シナリオを生成</button>
             </div>
-            <pre id="coc-dice-log" class="coc-dice-log"></pre>
+            <pre id="coc-scenario-preview" class="coc-sheet coc-sheet--scroll" aria-live="polite"></pre>
           </div>
-        </aside>
+
+          <div class="coc-panel coc-panel--glass coc-panel--span-full">
+            <div class="coc-panel__head">
+              <span class="coc-step">03</span>
+              <h2 class="coc-panel__title">調査員カード · セッション開始</h2>
+            </div>
+            <div class="coc-inv-grid">
+              <div class="coc-field">
+                <label for="coc-inv-name">名前（空ならランダム）</label>
+                <input id="coc-inv-name" type="text" autocomplete="name" placeholder="探索者の氏名" />
+              </div>
+              <div class="coc-actions coc-actions--inline">
+                <button type="button" class="coc-btn coc-btn--secondary" id="coc-btn-roll-inv">ランダム生成</button>
+              </div>
+            </div>
+            <pre id="coc-inv-sheet" class="coc-sheet coc-sheet--tall" aria-live="polite"></pre>
+            <div class="coc-actions coc-actions--start">
+              <button type="button" class="coc-btn coc-btn--primary coc-btn--lg" id="coc-btn-start">セッション開始</button>
+            </div>
+            <div id="coc-status" class="coc-status" role="status"></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="coc-play" class="coc-play-section" hidden>
+        <header class="coc-play-head">
+          <div>
+            <p class="coc-eyebrow coc-eyebrow--dim">Phase 02 — Live Session</p>
+            <h2 class="coc-play-title">対話セッション</h2>
+          </div>
+          <p class="coc-play-hint">判定結果はチャットに貼ってから送信すると、GM が齟齬なく参照できます。</p>
+        </header>
+
+        <div class="coc-play-layout">
+          <div class="coc-chat coc-chat--theater">
+            <div class="coc-chat__toolbar">
+              <span class="coc-chat__dots" aria-hidden="true"><i></i><i></i><i></i></span>
+              <span class="coc-mono-label">SESSION LOG</span>
+            </div>
+            <div id="coc-chat-log" class="coc-chat-log" aria-live="polite"></div>
+            <div class="coc-chat-compose">
+              <textarea id="coc-chat-input" rows="3" placeholder="調査員の行動・発言を入力…（Shift+Enter で改行）"></textarea>
+              <button type="button" class="coc-btn coc-btn--primary" id="coc-btn-send">送信</button>
+            </div>
+          </div>
+
+          <aside class="coc-side">
+            <div class="coc-panel coc-panel--glass coc-panel--compact">
+              <div class="coc-panel__head coc-panel__head--small">
+                <h2 class="coc-panel__title">ステータス</h2>
+              </div>
+              <dl class="coc-stat-grid">
+                <div class="coc-stat-tile">
+                  <dt>HP</dt>
+                  <dd id="coc-stat-hp">—</dd>
+                </div>
+                <div class="coc-stat-tile">
+                  <dt>SAN</dt>
+                  <dd id="coc-stat-san">—</dd>
+                </div>
+                <div class="coc-stat-tile">
+                  <dt>幸運</dt>
+                  <dd id="coc-stat-luck">—</dd>
+                </div>
+                <div class="coc-stat-tile coc-stat-tile--wide">
+                  <dt>現在シーン</dt>
+                  <dd id="coc-sidebar-scene">—</dd>
+                </div>
+              </dl>
+              <div class="coc-actions coc-actions--stack">
+                <button type="button" class="coc-btn coc-btn--secondary" id="coc-btn-advance">場面進行をリクエスト</button>
+                <button type="button" class="coc-btn coc-btn--ghost coc-btn--danger" id="coc-btn-reset">セッションをリセット</button>
+              </div>
+            </div>
+
+            <div class="coc-panel coc-panel--glass coc-panel--compact">
+              <div class="coc-panel__head coc-panel__head--small">
+                <h2 class="coc-panel__title">判定 · d100</h2>
+              </div>
+              <div class="coc-field">
+                <label for="coc-skill-select">技能</label>
+                <select id="coc-skill-select"></select>
+              </div>
+              <div class="coc-btn-grid">
+                <button type="button" class="coc-btn coc-btn--secondary" id="coc-btn-roll-skill">技能ロール</button>
+                <button type="button" class="coc-btn coc-btn--secondary" id="coc-btn-roll-d100">素 d100</button>
+                <button type="button" class="coc-btn coc-btn--ghost" id="coc-btn-insert-roll">入力欄へ貼る</button>
+              </div>
+              <pre id="coc-dice-log" class="coc-dice-log"></pre>
+            </div>
+          </aside>
+        </div>
       </section>
 
       <section id="coc-rules" class="coc-rules">
-        <details>
-          <summary>第6版メモ（このサイトでの扱い）</summary>
+        <details class="coc-details">
+          <summary class="coc-details__summary">
+            <span class="coc-details__icon" aria-hidden="true"></span>
+            第6版メモ（このサイトでの実装）
+          </summary>
           <div class="coc-rules-body">
             <p>
               特性は 3d6／2d6+6／3d6+3 で算出し、HP は ceil((CON+SIZ)/10)、MP=POW、SAN 上限=POW×5、アイデア=INT×5、知識=EDU×5、幸運=(3d6)×5
               としています。技能成功率はレギュラー／ハード（半値・整数切り捨て）／極限（五分之一・最小1）／01 の決定的成功／ファンブル（技能値に応じた96+/100）を実装しています。
             </p>
             <p>
-              GM はあなたの入力があったシーン情報だけを受け取ります。公式シナリオや長編キャンペーンは生成対象外です。
+              GM はプレイヤーの入力とシーン情報のみを参照します。公式シナリオや長編キャンペーンの複製は行いません。
             </p>
           </div>
         </details>
       </section>
+
+      <footer class="coc-footer">
+        <p class="coc-footer__mono">Solo CoC6 AI GM · Not affiliated with Chaosium Inc.</p>
+        <p class="coc-footer__note">表示されているルール・名称は便宜であり、公式資料と異なる場合があります。</p>
+      </footer>
     </main>
 
     <noscript>
