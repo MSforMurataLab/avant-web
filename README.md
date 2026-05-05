@@ -60,6 +60,17 @@ npm run test -- --run
 
 ワークフロー成功後、リポジトリの **Settings → Pages** に表示される URL で公開されます（例: `https://<org>.github.io/avant-web/`）。前述のとおり **別ホストのプロキシ URL をシークレットに設定する**まで、フロントからの生成・チャットは失敗します。
 
+### 公開時に `API 405` / `405 Not Allowed` と HTML が返るとき
+
+ブラウザが **`https://…github.io/…/api/llm/chat`** のような **Pages 自身の URL** に `POST` している状態です。Pages は静的ファイルだけを配るため POST が拒否され、nginx の **405 Not Allowed**（本文が `<html>…405…</html>`）になります。
+
+1. **Railway / Fly.io / Render / 自宅 VPS** などで `server/proxy.mjs` を HTTPS で公開し、`GEMINI_API_KEY` をサーバー側にだけ設定する。
+2. そのプロキシの **`…/api/llm` までのベース URL** を決める（例: `https://my-proxy.up.railway.app/api/llm`。末尾スラッシュなし）。
+3. GitHub の **Settings → Secrets and variables → Actions** に **`VITE_LLM_API_BASE`** を作成し、上記ベース URL を値として保存する。
+4. **`main` に push** して Actions のビルドが走り直すと、`import.meta.env` に埋め込まれ、フロントは **プロキシのホスト**へ POST するようになる。
+
+カスタムドメインで Pages を見せている場合も中身は静的ホストのままなので、同様に **`VITE_LLM_API_BASE` がビルドに入っているか**を確認してください。シークレットを追加したあと **再ビルド・再デプロイが必要**です（既存の `dist` だけでは反映されません）。
+
 ## 公開を止める方法
 
 1. **Pages をオフにする（推奨）**  

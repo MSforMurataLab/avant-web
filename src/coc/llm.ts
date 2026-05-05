@@ -9,6 +9,17 @@ export interface LlmClientOptions {
 function resolveLlmChatUrl(): string {
   const envBase = import.meta.env.VITE_LLM_API_BASE?.trim();
   if (envBase) return `${envBase.replace(/\/$/, "")}/chat`;
+
+  /** GitHub Pages 等の静的ホストは同一オリジンへの POST を許可しないため 405 になる */
+  if (import.meta.env.PROD) {
+    const host = typeof window !== "undefined" ? window.location.hostname : "";
+    if (host.endsWith(".github.io")) {
+      throw new Error(
+        "GitHub Pages では LLM プロキシを動かせません。別サーバーで proxy（server/proxy.mjs）を起動し、GitHub の Actions シークレット VITE_LLM_API_BASE にそのベース URL（例: https://api.example.com/api/llm、末尾スラッシュなし）を設定してから再デプロイしてください。README の「公開時に API 405」を参照。"
+      );
+    }
+  }
+
   return new URL("api/llm/chat", `${window.location.origin}${import.meta.env.BASE_URL}`).href;
 }
 
