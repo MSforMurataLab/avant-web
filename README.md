@@ -11,7 +11,7 @@ API キーは **`server/proxy.mjs`** が環境変数 **`GEMINI_API_KEY`**（ま�
 - **既定モデル**: 環境変数 **`GEMINI_MODEL`**（未設定時は `gemini-2.5-flash`）。画面の「モデル ID」で上書き可能（`gpt-…` のような OpenAI 名だけ送られた場合はサーバー既定にフォールバック）。
 - **エンドポイント**: 通常は `https://generativelanguage.googleapis.com/v1beta`。変更する場合のみ **`GEMINI_API_ROOT`** を設定。
 - API キーは [Google AI Studio](https://aistudio.google.com/app/apikey) などで発行します。
-- **503 / UNAVAILABLE（高負荷）** はプロキシが指数バックオフで最大 **5 回まで**（環境変数 **`GEMINI_MAX_ATTEMPTS`**）自動再試行します。それでも失敗する場合は時間をおいて再度お試しください。
+- **503 / UNAVAILABLE（高負荷）** はプロキシが指数バックオフで **モデルごとに最大 6 回**（**`GEMINI_MAX_ATTEMPTS`**）まで再試行し、それでもダメなら **`GEMINI_FALLBACK_MODELS`**（既定: `gemini-2.0-flash` → `gemini-flash-latest` → `gemini-2.5-pro`）の順で別モデルに切り替えます。すべて失敗する場合は時間をおいて再試行するか、フォールバック一覧をプロジェクトの環境に合わせて調整してください。
 
 **シナリオ生成のレート制限:** リクエスト本文に `_quota_bucket: "scenario"` が付いた呼び出し（本アプリのシナリオ JSON 生成のみ）は、**匿名クッキー `coc_quota_sid` ごとに日本時間で 1 日あたり 3 回まで**です（環境変数 **`SCENARIO_QUOTA_PER_DAY`** で変更可）。上限はシナリオ生成のみで、セッション中の GM チャットにはかかりません。フロントは **`credentials: include`** でクッキーを送るため、`CORS_ALLOW_ORIGIN` が `*` 以外の明示リストのとき **`Access-Control-Allow-Credentials`** が有効になります。別オリジンでクッキーを確実に渡す場合は **`COOKIE_SAMESITE_NONE=1`** と **`COOKIE_SECURE=1`**（HTTPS 必須）を検討してください。
 

@@ -17,8 +17,11 @@ const GEMINI_API_ROOT =
 const DEFAULT_MODEL = process.env.GEMINI_MODEL || "gemini-2.5-flash";
 const ALLOW = process.env.CORS_ALLOW_ORIGIN || "*";
 const SCENARIO_DAILY_LIMIT = Number(process.env.SCENARIO_QUOTA_PER_DAY || 3);
-/** Gemini が 503 / UNAVAILABLE などで落ちるときの再試行回数（計 MAX_ATTEMPTS 回リクエスト） */
-const GEMINI_MAX_ATTEMPTS = Math.min(10, Math.max(1, Number(process.env.GEMINI_MAX_ATTEMPTS || 5)));
+/** 同一モデルあたりの最大試行回数（バックオフ付き） */
+const GEMINI_MAX_ATTEMPTS = Math.min(12, Math.max(1, Number(process.env.GEMINI_MAX_ATTEMPTS || 6)));
+/** カンマ区切り。既定モデルが 503 等で続くとき、この順で別モデルを試す（429 の別枠・別負荷になりやすい） */
+const GEMINI_FALLBACK_MODELS_RAW =
+  process.env.GEMINI_FALLBACK_MODELS || "gemini-2.0-flash,gemini-flash-latest,gemini-2.5-pro";
 
 /** @param {number} ms */
 function sleep(ms) {
@@ -45,6 +48,44 @@ function geminiTransientFailure(httpStatus, bodyText) {
   } catch {
     return httpStatus >= 500;
   }
+}
+
+/**
+ * このモデルは諦めて別モデルへ切り替えるか（キー不正・リクエスト不正では切り替えない）
+ * @param {number} httpStatus
+ * @param {string} bodyText
+ */
+function shouldSwitchGeminiModel(httpStatus, bodyText) {
+  if (httpStatus === 401 || httpStatus === 403 || httpStatus === 400) return false;
+  if (httpStatus === 404) return true;
+  if (httpStatus === 503 || httpStatus === 429 || httpStatus === 502 || httpStatus === 500) return true;
+  try {
+    const o = JSON.parse(bodyText);
+    const err = o && typeof o === "object" && "error" in o ? /** @type {{ error?: { status?: string; message?: string } }} */ (o).error : undefined;
+    const st = typeof err?.status === "string" ? err.status : "";
+    if (st === "UNAVAILABLE" || st === "RESOURCE_EXHAUSTED") return true;
+    const msg = typeof err?.message === "string" ? err.message : "";
+    if (/high demand|try again later|overloaded|temporarily unavailable/i.test(msg)) return true;
+    return false;
+  } catch {
+    return httpStatus >= 502;
+  }
+}
+
+/** @param {string} primaryModelId */
+function buildGeminiModelChain(primaryModelId) {
+  const extras = GEMINI_FALLBACK_MODELS_RAW.split(",")
+    .map((s) => normalizeGeminiModelId(s.trim()))
+    .filter(Boolean);
+  /** @type {string[]} */
+  const chain = [];
+  const seen = new Set();
+  for (const m of [primaryModelId, ...extras]) {
+    if (!m || seen.has(m)) continue;
+    seen.add(m);
+    chain.push(m);
+  }
+  return chain;
 }
 
 const UUID_RE =
@@ -333,7 +374,8 @@ const server = http.createServer((req, res) => {
           typeof json.response_format === "object" &&
           json.response_format.type === "json_object";
 
-        const modelId = resolveGeminiModel(json.model, DEFAULT_MODEL);
+        const primaryModel = resolveGeminiModel(json.model, DEFAULT_MODEL);
+        const modelChain = buildGeminiModelChain(primaryModel);
         const geminiBody = buildGeminiBody(json.messages, temperature, wantsJson ? "application/json" : undefined);
 
         if (!Array.isArray(geminiBody.contents) || geminiBody.contents.length === 0) {
@@ -342,35 +384,54 @@ const server = http.createServer((req, res) => {
           return;
         }
 
-        const url = `${GEMINI_API_ROOT}/models/${encodeURIComponent(modelId)}:generateContent?key=${encodeURIComponent(API_KEY)}`;
         const payloadJson = JSON.stringify(geminiBody);
 
         let responseText = "";
+        /** @type {string} */
+        let modelUsed = primaryModel;
 
         try {
-          for (let attempt = 1; attempt <= GEMINI_MAX_ATTEMPTS; attempt++) {
-            const upstream = await fetch(url, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: payloadJson,
-            });
-            responseText = await upstream.text();
+          modelLoop: for (let mi = 0; mi < modelChain.length; mi++) {
+            const modelId = modelChain[mi];
+            const url = `${GEMINI_API_ROOT}/models/${encodeURIComponent(modelId)}:generateContent?key=${encodeURIComponent(API_KEY)}`;
 
-            if (upstream.ok) break;
+            for (let attempt = 1; attempt <= GEMINI_MAX_ATTEMPTS; attempt++) {
+              const upstream = await fetch(url, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: payloadJson,
+              });
+              responseText = await upstream.text();
 
-            const retry =
-              attempt < GEMINI_MAX_ATTEMPTS && geminiTransientFailure(upstream.status, responseText);
-            if (!retry) {
+              if (upstream.ok) {
+                modelUsed = modelId;
+                break modelLoop;
+              }
+
+              const retrySameModel =
+                attempt < GEMINI_MAX_ATTEMPTS && geminiTransientFailure(upstream.status, responseText);
+
+              if (retrySameModel) {
+                const backoffMs =
+                  Math.min(22_000, 550 * 2 ** (attempt - 1)) + Math.floor(Math.random() * 700);
+                console.error(
+                  `[gemini-proxy] model=${modelId} ${upstream.status} → ${backoffMs}ms 後に再試行 (${attempt}/${GEMINI_MAX_ATTEMPTS})`
+                );
+                await sleep(backoffMs);
+                continue;
+              }
+
+              const canSwitch = mi < modelChain.length - 1 && shouldSwitchGeminiModel(upstream.status, responseText);
+
+              if (canSwitch) {
+                console.error(`[gemini-proxy] model=${modelId} が利用不可 → ${modelChain[mi + 1]} を試します`);
+                continue modelLoop;
+              }
+
               res.writeHead(upstream.status, { "Content-Type": "application/json; charset=utf-8" });
               res.end(responseText || JSON.stringify({ error: `Gemini API ${upstream.status}` }));
               return;
             }
-
-            const backoffMs = Math.min(12_000, 450 * 2 ** (attempt - 1)) + Math.floor(Math.random() * 500);
-            console.error(
-              `[gemini-proxy] ${upstream.status} 一時エラー → ${backoffMs}ms 後に再試行 (${attempt}/${GEMINI_MAX_ATTEMPTS})`
-            );
-            await sleep(backoffMs);
           }
         } catch (e) {
           res.writeHead(502, { "Content-Type": "application/json; charset=utf-8" });
@@ -379,6 +440,12 @@ const server = http.createServer((req, res) => {
               error: e instanceof Error ? e.message : String(e),
             })
           );
+          return;
+        }
+
+        if (!responseText) {
+          res.writeHead(502, { "Content-Type": "application/json; charset=utf-8" });
+          res.end(JSON.stringify({ error: "Gemini から応答がありませんでした。" }));
           return;
         }
 
@@ -417,7 +484,7 @@ const server = http.createServer((req, res) => {
           scenarioQuota.set(key, rec);
         }
 
-        const openAiShaped = geminiToOpenAiChatCompletion(modelId, gemParsed, assistantText);
+        const openAiShaped = geminiToOpenAiChatCompletion(modelUsed, gemParsed, assistantText);
         res.writeHead(200, { "Content-Type": "application/json; charset=utf-8" });
         res.end(JSON.stringify(openAiShaped));
       } catch (e) {
