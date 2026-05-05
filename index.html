@@ -74,7 +74,7 @@
             <ul class="coc-hero-pills" aria-label="主要機能">
               <li class="coc-pill">第6版ベース判定</li>
               <li class="coc-pill">短期シナリオ JSON</li>
-              <li class="coc-pill">サーバー側 LLM プロキシ</li>
+              <li class="coc-pill">Gemini API（サーバープロキシ）</li>
               <li class="coc-pill">日次シナリオ上限</li>
             </ul>
           </div>
@@ -84,7 +84,7 @@
               <span class="coc-mono-label">OPERATOR NOTE</span>
             </div>
             <p class="coc-hero-card__body">
-              LLM の API キーはサーバーだけに保持し、ブラウザはプロキシ経由のみです。公開プロキシは第三者利用のリスクがあります。
+              Google Gemini の API キーはサーバーだけに保持し、ブラウザはプロキシ経由のみです。公開プロキシは第三者利用のリスクがあります。
               生成物は架空オリジナルであり商業シナリオの転載ではありません。ルール解釈はグループの合意が優先します。
             </p>
           </aside>
@@ -105,11 +105,11 @@
               <h2 class="coc-panel__title">モデル</h2>
             </div>
             <p class="coc-help">
-              空欄のときはサーバー環境変数 <span class="coc-kbd">OPENAI_MODEL</span> が使われます。
+              空欄のときはサーバー環境変数 <span class="coc-kbd">GEMINI_MODEL</span> が使われます。
             </p>
             <div class="coc-field">
               <label for="coc-model">モデル ID（任意）</label>
-              <input id="coc-model" type="text" value="" autocomplete="off" placeholder="例: gpt-4o-mini" />
+              <input id="coc-model" type="text" value="" autocomplete="off" placeholder="例: gemini-2.0-flash" />
             </div>
           </div>
 

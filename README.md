@@ -4,9 +4,13 @@
 
 技能判定の **d100 はブラウザ内の暗号論的乱数**で振り、結果をチャットに貼り付けられます。GM 応答末尾の `<<<SCENE_NEXT>>>` で場面インデックスが進みます。
 
-### LLM 呼び出し（サーバー側キー）
+### LLM 呼び出し（サーバー側キー · Google Gemini）
 
-API キーは **`server/proxy.mjs`** が環境変数 **`OPENAI_API_KEY`** から読み、OpenAI 互換の `chat/completions` に中継します。フロントは **`POST …/api/llm/chat`** にだけアクセスし、キーを保持しません。
+API キーは **`server/proxy.mjs`** が環境変数 **`GEMINI_API_KEY`**（または **`GOOGLE_API_KEY`**）から読み、[Gemini API](https://ai.google.dev/) の **`generateContent`（v1beta）** を呼び出します。フロントは従来どおり **`POST …/api/llm/chat`** に OpenAI 形式の `messages` を送りますが、サーバーが Gemini 用ボディへ変換し、応答だけ OpenAI の `chat.completion` 形に揃えて返すため **フロントの改修は不要**です。
+
+- **既定モデル**: 環境変数 **`GEMINI_MODEL`**（未設定時は `gemini-2.0-flash`）。画面の「モデル ID」で上書き可能（`gpt-…` のような OpenAI 名だけ送られた場合はサーバー既定にフォールバック）。
+- **エンドポイント**: 通常は `https://generativelanguage.googleapis.com/v1beta`。変更する場合のみ **`GEMINI_API_ROOT`** を設定。
+- API キーは [Google AI Studio](https://aistudio.google.com/app/apikey) などで発行します。
 
 **シナリオ生成のレート制限:** リクエスト本文に `_quota_bucket: "scenario"` が付いた呼び出し（本アプリのシナリオ JSON 生成のみ）は、**匿名クッキー `coc_quota_sid` ごとに日本時間で 1 日あたり 3 回まで**です（環境変数 **`SCENARIO_QUOTA_PER_DAY`** で変更可）。上限はシナリオ生成のみで、セッション中の GM チャットにはかかりません。フロントは **`credentials: include`** でクッキーを送るため、`CORS_ALLOW_ORIGIN` が `*` 以外の明示リストのとき **`Access-Control-Allow-Credentials`** が有効になります。別オリジンでクッキーを確実に渡す場合は **`COOKIE_SAMESITE_NONE=1`** と **`COOKIE_SECURE=1`**（HTTPS 必須）を検討してください。
 
@@ -19,8 +23,8 @@ API キーは **`server/proxy.mjs`** が環境変数 **`OPENAI_API_KEY`** から
 ターミナル 1（プロキシ。キーはこのプロセスの環境だけに置く）:
 
 ```bash
-export OPENAI_API_KEY=sk-...   # Windows は set / PowerShell の環境変数でも可
-npm run server                  # 既定 http://127.0.0.1:8787
+export GEMINI_API_KEY=...   # Windows は set / PowerShell の環境変数でも可
+npm run server              # 既定 http://127.0.0.1:8787
 ```
 
 ターミナル 2:

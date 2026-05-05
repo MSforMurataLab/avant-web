@@ -2,7 +2,7 @@ export type ChatMessage = { role: "system" | "user" | "assistant"; content: stri
 
 /** ブラウザからサーバーへ渡すオプション（キーは含めない） */
 export interface LlmClientOptions {
-  /** 未指定時はサーバー環境変数 OPENAI_MODEL の既定値 */
+  /** 未指定時はサーバー環境変数 GEMINI_MODEL の既定値（Gemini モデル ID） */
   model?: string;
 }
 
