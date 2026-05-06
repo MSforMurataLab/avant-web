@@ -2,7 +2,7 @@ import path from "node:path";
 import { defineConfig } from "vite";
 import { VitePWA } from "vite-plugin-pwa";
 
-const BASE = "/avant-web/";
+const BASE = "/";
 /** dev サーバー上では fetch が BASE_URL 付き（例: /avant-web/api/llm/chat）になるため、プロキシも同一パスで取り、ローカルプロキシのパスへ書き換える */
 const BASE_PATH = BASE.replace(/\/$/, "");
 
