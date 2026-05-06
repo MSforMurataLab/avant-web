@@ -325,10 +325,37 @@
   padding: 0.75rem 0.9rem;
   border-radius: var(--radius-sm);
   font-size: 0.8rem;
-  line-height: 1.55;
+  line-height: 1.6;
   color: rgba(232, 230, 239, 0.78);
   background: rgba(0, 255, 200, 0.05);
   border: 1px solid rgba(0, 255, 200, 0.12);
+}
+
+/* 狭い幅では「上限説明」と「チャットは別」を段で分け、文中での不自然な折り返しを減らす */
+.coc-quota-note__stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  min-width: 0;
+  flex: 1;
+}
+
+.coc-quota-note__seg {
+  display: block;
+}
+
+.coc-quota-note__seg strong {
+  font-weight: 600;
+}
+
+@media (min-width: 560px) {
+  .coc-quota-note__stack {
+    display: inline;
+  }
+
+  .coc-quota-note__seg {
+    display: inline;
+  }
 }
 
 .coc-quota-dot {
