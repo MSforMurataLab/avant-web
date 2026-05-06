@@ -152,7 +152,7 @@ void main() {
   if (u_inline_finish > 0.5) {
     float vign = smoothstep(1.35, 0.25, length(uv * vec2(0.9, 1.0)));
     col *= vign;
-    float scan = sin(fc.y * 0.45 + u_scroll * 18.0 + u_time * 2.95 * mix(0.25, 1.0, amp)) * 0.012 + 1.0;
+    float scan = sin(fc.y * 0.45 + u_scroll * 18.0 + u_time * 1.1 * mix(0.2, 0.55, amp)) * 0.006 + 1.0;
     col *= scan;
   }
 

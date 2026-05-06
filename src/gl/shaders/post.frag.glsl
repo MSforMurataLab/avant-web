@@ -40,9 +40,11 @@ void main() {
 
   float vign = smoothstep(1.4, 0.2, length(uv * vec2(0.9, 1.0)));
   x *= vign;
-  float scan = sin(fc.y * 0.45 + u_scroll * 18.0 + u_time * 2.95 * mix(0.25, 1.0, amp)) * 0.011 + 1.0;
+  /* 走査線は弱めに（u_time 依存を小さくしてフレーム間の明滅感を抑える） */
+  float scan = sin(fc.y * 0.45 + u_scroll * 18.0 + u_time * 1.1 * mix(0.2, 0.55, amp)) * 0.006 + 1.0;
   x *= scan;
-  x += (phash(fc + u_time * 37.0) - 0.5) * 0.016 * mix(0.35, 1.0, amp);
+  /* 画素グレイン: u_time を混ぜると毎フレーム白色ノイズになり点滅に見えるため空間ハッシュのみ */
+  x += (phash(fc * 0.31) - 0.5) * 0.008 * mix(0.25, 0.75, amp);
 
   FRAG_POST_OUT(x);
 }

@@ -530,14 +530,15 @@ void main() {
     const frameMs = performance.now() - tFrame0;
     perfSmooth += (frameMs - perfSmooth) * 0.048;
     perfTicks++;
-    if (perfTicks >= 96) {
+    /* 解像度スケールの切替は FBO 再作成を伴い一瞬明滅しやすい → 判定を遅く・段差を小さく */
+    if (perfTicks >= 200) {
       perfTicks = 0;
       let changed = false;
-      if (perfSmooth > 24.5 && renderScale > SCALE_MIN + 0.02) {
-        renderScale = Math.max(SCALE_MIN, renderScale - 0.038);
+      if (perfSmooth > 30 && renderScale > SCALE_MIN + 0.02) {
+        renderScale = Math.max(SCALE_MIN, renderScale - 0.022);
         changed = true;
-      } else if (perfSmooth < 9.5 && renderScale < SCALE_MAX - 0.02) {
-        renderScale = Math.min(SCALE_MAX, renderScale + 0.03);
+      } else if (perfSmooth < 8.2 && renderScale < SCALE_MAX - 0.02) {
+        renderScale = Math.min(SCALE_MAX, renderScale + 0.018);
         changed = true;
       }
       if (changed) resize();
